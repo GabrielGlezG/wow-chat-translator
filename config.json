@@ -1,6 +1,6 @@
 {
   "wow_chat_log_path": "C:/Program Files (x86)/World of Warcraft/_forever_/Logs/WoWChatLog.txt",
-  "player_name": "Aptinstall Totem",
+  "player_name": "",
   "allowed_channels": [
     "Grupo",
     "Party",
@@ -61,10 +61,10 @@
     "auto_fade_seconds": 35,
     "enabled_channel_filters": {
       "Grupo": true,
-      "Susurro": false,
-      "Hermandad": false,
-      "Banda": false,
-      "Decir": false
+      "Susurro": true,
+      "Hermandad": true,
+      "Banda": true,
+      "Decir": true
     },
     "enable_alt_t_hotkey": true,
     "start_folded": true,
