@@ -1,0 +1,8 @@
+## Interface: 16001
+## Title: ForeverChatLogger
+## Notes: Activa /chatlog automaticamente para WoW Chat Translator.
+## Author: Gabriel
+## Version: 1.0.0
+## SavedVariables: ForeverChatLoggerDB
+
+ForeverChatLogger.lua

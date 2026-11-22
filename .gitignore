@@ -1,0 +1,17 @@
+# Secretos y variables de entorno
+.env
+
+# Entornos virtuales y caché de Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Archivos de log simulados o temporales
+tests/mock_WoWChatLog.txt
+*.log
+
+# Modelos locales offline (CTranslate2 / MarianMT)
+models/

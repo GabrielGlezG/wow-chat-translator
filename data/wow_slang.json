@@ -1,0 +1,494 @@
+{
+  "description": "Glosario oficial de jerga gamer, mazmorras y abreviaturas de World of Warcraft para WoW Chat Translator",
+  "version": "1.1.0",
+  "fast_exact_replacements": {
+    "oom": "sin maná (OOM)",
+    "dcd": "se desconectó (DC)",
+    "dc'd": "se desconectó (DC)",
+    "dc": "desconectado (DC)",
+    "ty": "gracias",
+    "thx": "gracias",
+    "tyvm": "muchas gracias",
+    "np": "de nada",
+    "yw": "de nada",
+    "mb": "mala mía",
+    "my bad": "mala mía",
+    "brb": "ya vuelvo (BRB)",
+    "afk": "ausente (AFK)",
+    "gg": "buen juego (GG)",
+    "gj": "bien hecho (GJ)",
+    "gz": "felicidades (GZ)",
+    "grats": "felicidades",
+    "rdy": "listo",
+    "ready": "listo",
+    "sec": "un segundo",
+    "1 sec": "un segundo",
+    "wait": "esperen",
+    "stop": "paren",
+    "wipe": "wipe (morimos todos)",
+    "wipe it": "wipéenlo (déjense morir)",
+    "run": "corran",
+    "reset": "reinicien (reset)",
+    "inv": "invita",
+    "invite": "invita",
+    "sum": "invócame (summon)",
+    "summon": "invócame (summon)",
+    "port": "portal por favor",
+    "portal": "portal",
+    "rez": "resucítame",
+    "res": "resucítame",
+    "brez": "resurrección en combate (brez)",
+    "lust": "ansia de sangre / heroísmo",
+    "hero": "heroísmo",
+    "bloodlust": "ansia de sangre",
+    "thats it": "eso es todo",
+    "that's it": "eso es todo",
+    "that sucked": "eso estuvo fatal",
+    "nice": "buena",
+    "yep": "sí",
+    "nah": "no",
+    "nope": "no",
+    "lol": "jaja (lol)",
+    "lmao": "jajaja",
+    "rofl": "jajaja",
+    "hahaha": "jajaja",
+    "need": "necesito (need)",
+    "greed": "codicia (greed)",
+    "pass": "paso (pass)",
+    "de": "desencantar (DE)"
+  },
+  "slang_en_to_es": [
+    {
+      "pattern": "\\bmyu\\b",
+      "replace": "my"
+    },
+    {
+      "pattern": "\\bbugge\\s*dwhen\\b",
+      "replace": "bugeó cuando"
+    },
+    {
+      "pattern": "\\bbugged\\s*when\\b",
+      "replace": "bugeó cuando"
+    },
+    {
+      "pattern": "[%^&*!#$]{2,}",
+      "replace": ""
+    },
+    {
+      "pattern": "\\bhealer\\s+oom\\b",
+      "replace": "healer sin maná"
+    },
+    {
+      "pattern": "\\boom\\b",
+      "replace": "sin maná"
+    },
+    {
+      "pattern": "\\bfat\\s*fingered\\s*blink\\b",
+      "replace": "apreté blink por error"
+    },
+    {
+      "pattern": "\\bfat\\s*fingered\\b",
+      "replace": "apreté por error"
+    },
+    {
+      "pattern": "\\bdon'?t\\s+pull\\b",
+      "replace": "no puleen"
+    },
+    {
+      "pattern": "\\bwait\\s+before\\s+pull(?:ing)?\\b",
+      "replace": "esperen antes de pulear"
+    },
+    {
+      "pattern": "\\bstop\\s+pulling\\b",
+      "replace": "dejen de pulear"
+    },
+    {
+      "pattern": "\\bpull\\s+slowly\\b",
+      "replace": "puleen despacio"
+    },
+    {
+      "pattern": "\\bpull\\b",
+      "replace": "pulear"
+    },
+    {
+      "pattern": "\\bpulling\\b",
+      "replace": "puleando"
+    },
+    {
+      "pattern": "\\bwipe\\s+it\\b",
+      "replace": "déjense morir"
+    },
+    {
+      "pattern": "\\bwipe\\b",
+      "replace": "wipe"
+    },
+    {
+      "pattern": "\\bwiped\\b",
+      "replace": "wipéamos"
+    },
+    {
+      "pattern": "\\bDCs?\\b|\\bDCd\\b|\\bDC'd\\b",
+      "replace": "DC"
+    },
+    {
+      "pattern": "\\blag\\s*spike\\b",
+      "replace": "lagazo"
+    },
+    {
+      "pattern": "\\bhuge\\s+lag\\b",
+      "replace": "mucho lag"
+    },
+    {
+      "pattern": "\\bmb\\b|\\bmy\\s+bad\\b",
+      "replace": "mala mía"
+    },
+    {
+      "pattern": "\\blfm\\b",
+      "replace": "busco más (LFM)"
+    },
+    {
+      "pattern": "\\blfg\\b",
+      "replace": "busco grupo (LFG)"
+    },
+    {
+      "pattern": "\\bwts\\b",
+      "replace": "vendo (WTS)"
+    },
+    {
+      "pattern": "\\bwtb\\b",
+      "replace": "compro (WTB)"
+    },
+    {
+      "pattern": "\\bwtt\\b",
+      "replace": "cambio (WTT)"
+    },
+    {
+      "pattern": "\\brdy\\b",
+      "replace": "listo"
+    },
+    {
+      "pattern": "\\bty\\b|\\bthx\\b",
+      "replace": "gracias"
+    },
+    {
+      "pattern": "\\bnp\\b|\\byw\\b",
+      "replace": "de nada"
+    },
+    {
+      "pattern": "\\bbrb\\b",
+      "replace": "ya vuelvo"
+    },
+    {
+      "pattern": "\\bafk\\b",
+      "replace": "ausente"
+    },
+    {
+      "pattern": "\\bbio\\b",
+      "replace": "al baño"
+    },
+    {
+      "pattern": "\\bgg\\b",
+      "replace": "buen juego"
+    },
+    {
+      "pattern": "\\bgj\\b",
+      "replace": "bien hecho"
+    },
+    {
+      "pattern": "\\bgz\\b|\\bgrats\\b",
+      "replace": "felicidades"
+    },
+    {
+      "pattern": "\\badds\\b",
+      "replace": "adds"
+    },
+    {
+      "pattern": "\\baggro\\b",
+      "replace": "aggro"
+    },
+    {
+      "pattern": "\\btaunt\\b",
+      "replace": "taunt"
+    },
+    {
+      "pattern": "\\blos\\b|\\bline\\s+of\\s+sight\\b",
+      "replace": "línea de visión"
+    },
+    {
+      "pattern": "\\bpat\\b|\\bpatrol\\b",
+      "replace": "patrulla"
+    },
+    {
+      "pattern": "\\bdispel\\b",
+      "replace": "dispelear"
+    },
+    {
+      "pattern": "\\bcleanse\\b",
+      "replace": "limpiar"
+    },
+    {
+      "pattern": "\\binterrupt\\b|\\bkick\\b",
+      "replace": "cortar casteo"
+    },
+    {
+      "pattern": "\\bsap\\b",
+      "replace": "porrazo"
+    },
+    {
+      "pattern": "\\bsheep\\b|\\bpoly\\b",
+      "replace": "sheep"
+    },
+    {
+      "pattern": "\\bkite\\b",
+      "replace": "kitear"
+    },
+    {
+      "pattern": "\\bkiting\\b",
+      "replace": "kiteando"
+    },
+    {
+      "pattern": "\\bsoak\\b",
+      "replace": "absorber daño"
+    },
+    {
+      "pattern": "\\bstack\\b",
+      "replace": "júntense"
+    },
+    {
+      "pattern": "\\bspread\\b",
+      "replace": "sepárense"
+    },
+    {
+      "pattern": "\\bskip\\b",
+      "replace": "saltar"
+    },
+    {
+      "pattern": "\\bburst\\b",
+      "replace": "burst"
+    },
+    {
+      "pattern": "\\bsoft\\s*res\\b|\\bsr\\b",
+      "replace": "soft reserve"
+    },
+    {
+      "pattern": "\\bhard\\s*res\\b|\\bhr\\b",
+      "replace": "hard reserve"
+    },
+    {
+      "pattern": "\\bmain\\s*spec\\b|\\bms\\b",
+      "replace": "main spec"
+    },
+    {
+      "pattern": "\\boff\\s*spec\\b|\\bos\\b",
+      "replace": "off spec"
+    },
+    {
+      "pattern": "\\bneed\\b",
+      "replace": "necesito"
+    },
+    {
+      "pattern": "\\bgreed\\b",
+      "replace": "codicia"
+    },
+    {
+      "pattern": "\\bboe\\b",
+      "replace": "BoE"
+    },
+    {
+      "pattern": "\\bbop\\b",
+      "replace": "BoP"
+    },
+    {
+      "pattern": "\\bbis\\b",
+      "replace": "BiS"
+    },
+    {
+      "pattern": "\\bdisenchant\\b",
+      "replace": "desencantar"
+    },
+    {
+      "pattern": "\\broll\\b",
+      "replace": "tirar dados"
+    }
+  ],
+  "post_corrections_es": [
+    {
+      "pattern": "\\bno\\s+tires\\b|\\bno\\s+jales\\b",
+      "replace": "no puleen"
+    },
+    {
+      "pattern": "\\btirar\\b|\\bjalar\\b",
+      "replace": "pulear"
+    },
+    {
+      "pattern": "\\btirón\\b|\\bjalón\\b",
+      "replace": "pull"
+    },
+    {
+      "pattern": "\\bsanador\\b",
+      "replace": "healer"
+    },
+    {
+      "pattern": "\\btanque\\s+de\\s+guerra\\b|\\btanque\\b",
+      "replace": "tank"
+    },
+    {
+      "pattern": "\\bparpadeo\\b|\\bhechizo\\s+de\\s+parpadeo\\b|\\bdestello\\b|\\bplug\\b",
+      "replace": "blink (traslación)"
+    },
+    {
+      "pattern": "\\bporrazo\\b",
+      "replace": "sap"
+    },
+    {
+      "pattern": "\\boveja\\b",
+      "replace": "sheep"
+    },
+    {
+      "pattern": "\\bde\\s+desecho\\b",
+      "replace": "wipe"
+    },
+    {
+      "pattern": "\\bmuertos\\s+vivientes\\b",
+      "replace": "no-muertos"
+    },
+    {
+      "pattern": "\\bsavia\\b",
+      "replace": "sap"
+    },
+    {
+      "pattern": "\\bporrazo\\b",
+      "replace": "sap"
+    }
+  ],
+  "slang_es_to_en": [
+    {
+      "pattern": "\\bsin\\s+man[aá]\\b",
+      "replace": "oom"
+    },
+    {
+      "pattern": "\\blagazo\\s+terrible\\b|\\blagazo\\b|\\bmucho\\s+lag\\b",
+      "replace": "huge lag spike"
+    },
+    {
+      "pattern": "\\bcodicia\\b",
+      "replace": "greed"
+    },
+    {
+      "pattern": "\\bnecesidad\\b|\\bnecesito\\b",
+      "replace": "need"
+    },
+    {
+      "pattern": "\\bno\\s+puleen\\b|\\bno\\s+jalen\\b|\\bno\\s+pulleen\\b",
+      "replace": "dont pull"
+    },
+    {
+      "pattern": "\\bpuleen\\b|\\bpullear\\b|\\bpulear\\b",
+      "replace": "pull"
+    },
+    {
+      "pattern": "\\bmala\\s+m[ií]a\\b",
+      "replace": "my bad"
+    },
+    {
+      "pattern": "\\bya\\s+vuelvo\\b",
+      "replace": "brb"
+    },
+    {
+      "pattern": "\\bal\\s+ba[ñn]o\\b",
+      "replace": "bio break"
+    },
+    {
+      "pattern": "\\bun\\s+poco\\s+que\\s+estoy\\b",
+      "replace": "sec, i am"
+    },
+    {
+      "pattern": "\\bun\\s+seg\\b|\\bun\\s+segundo\\b|\\bespera\\b|\\besperen\\b",
+      "replace": "wait a sec"
+    },
+    {
+      "pattern": "\\bbuen\\s+juego\\b",
+      "replace": "gg"
+    },
+    {
+      "pattern": "\\bbien\\s+hecho\\b",
+      "replace": "gj"
+    },
+    {
+      "pattern": "\\bfelicidades\\b",
+      "replace": "gz"
+    },
+    {
+      "pattern": "\\bde\\s+nada\\b",
+      "replace": "np"
+    },
+    {
+      "pattern": "\\bgracias\\b",
+      "replace": "ty"
+    },
+    {
+      "pattern": "\\bausente\\b",
+      "replace": "afk"
+    },
+    {
+      "pattern": "\\bdesencantar\\b",
+      "replace": "de"
+    },
+    {
+      "pattern": "\\bresuc[ií]tame\\b|\\bresuc[ií]tenme\\b",
+      "replace": "rez pls"
+    },
+    {
+      "pattern": "\\bcorta(?:r|le)?\\s+casteo\\b",
+      "replace": "kick / interrupt"
+    },
+    {
+      "pattern": "\\bdispea\\b|\\bdispelea\\b|\\blimpia\\b",
+      "replace": "dispel pls"
+    },
+    {
+      "pattern": "\\bd[eé]jense\\s+morir\\b",
+      "replace": "wipe it"
+    }
+  ],
+  "post_corrections_en": [
+    {
+      "pattern": "\\bgive\\s+it\\s+green\\b",
+      "replace": "greed"
+    },
+    {
+      "pattern": "\\bgreen\\b",
+      "replace": "greed"
+    }
+  ],
+  "dungeons_and_raids": {
+    "rfc": "Sima Ígnea (RFC)",
+    "wc": "Cuevas de los Lamentos (WC)",
+    "dm": "Minas de la Muerte / La Masacre (DM)",
+    "vc": "Minas de la Muerte (VanCleef / VC)",
+    "sfk": "Castillo de Colmillo Oscuro (SFK)",
+    "bfd": "Cavernas de Brazanegra (BFD)",
+    "stocks": "Las Mazmorras (Stockades)",
+    "stockades": "Las Mazmorras (Stockades)",
+    "gnomer": "Gnomeregan (Gnomer)",
+    "sm": "Monasterio Escarlata (SM)",
+    "rfk": "Horno Escarlata (RFK)",
+    "rfd": "Zahúrda Rajacra (RFD)",
+    "zf": "Zul'Farrak (ZF)",
+    "mara": "Maraudon",
+    "st": "Templo Sumergido (ST)",
+    "brd": "Profundidades de Roca Negra (BRD)",
+    "lbrs": "Cumbre de Roca Negra Inferior (LBRS)",
+    "ubrs": "Cumbre de Roca Negra Superior (UBRS)",
+    "scholo": "Scholomance",
+    "strat": "Stratholme",
+    "mc": "Núcleo de Magma (MC)",
+    "ony": "Onyxia",
+    "bwl": "Guirnalda de Alanegra (BWL)",
+    "zg": "Zul'Gurub (ZG)",
+    "aq": "Ahn'Qiraj (AQ)",
+    "aq20": "Ruinas de Ahn'Qiraj (AQ20)",
+    "aq40": "Templo de Ahn'Qiraj (AQ40)",
+    "naxx": "Naxxramas (Naxx)"
+  }
+}

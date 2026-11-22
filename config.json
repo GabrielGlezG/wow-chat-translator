@@ -1,0 +1,89 @@
+{
+  "wow_chat_log_path": "C:/Program Files (x86)/World of Warcraft/_forever_/Logs/WoWChatLog.txt",
+  "player_name": "Aptinstall Totem",
+  "allowed_channels": [
+    "Grupo",
+    "Party",
+    "Líder del grupo",
+    "Party Leader",
+    "Banda",
+    "Raid",
+    "Líder de banda",
+    "Raid Leader",
+    "Alerta de banda",
+    "Raid Warning",
+    "Hermandad",
+    "Guild",
+    "Oficial",
+    "Officer",
+    "Campo de batalla",
+    "Battleground",
+    "Susurro",
+    "Whisper",
+    "Decir",
+    "Say"
+  ],
+  "ignored_channels": [
+    "Comercio",
+    "Trade",
+    "General",
+    "DefensaLocal",
+    "LocalDefense",
+    "BuscarGrupo",
+    "LookingForGroup",
+    "Mundo",
+    "World"
+  ],
+  "hotkeys": {
+    "scan_incoming": "f7",
+    "translate_outgoing": "f8",
+    "toggle_move_overlay": "f9",
+    "pause_resume": "f10",
+    "clear_overlay": "alt+l"
+  },
+  "hotkey_delays_ms": {
+    "after_select_all": 60,
+    "after_copy": 60,
+    "after_paste": 60
+  },
+  "restore_clipboard": true,
+  "overlay": {
+    "x": 377,
+    "y": 609,
+    "width": 450,
+    "height": 215,
+    "max_messages": 6,
+    "font_family": "Segoe UI",
+    "font_size": 12,
+    "background_opacity": 0,
+    "show_original_en": false,
+    "auto_fade": false,
+    "auto_fade_seconds": 35,
+    "enabled_channel_filters": {
+      "Grupo": true,
+      "Susurro": false,
+      "Hermandad": false,
+      "Banda": false,
+      "Decir": false
+    },
+    "enable_alt_t_hotkey": true,
+    "start_folded": true,
+    "tab_x": 265,
+    "tab_y": 835,
+    "chat_x": 36,
+    "chat_y": 835,
+    "chat_w": 450,
+    "chat_h": 215,
+    "auto_hide_on_minimize": true,
+    "only_visible_with_wow": true
+  },
+  "llm": {
+    "provider": "local",
+    "model": "opus-mt",
+    "timeout_seconds": 6.0,
+    "temperature": 0.2,
+    "max_output_tokens": 128,
+    "thinking_budget": 0
+  },
+  "auto_screen_poll": true
+}
