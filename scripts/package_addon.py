@@ -78,7 +78,7 @@ def package_addon() -> Path:
 - **Comandos dentro del juego:** `/translator status`, `/translator on`, `/translator off`, `/translator flush`.
 
 > 💡 **Nota importante:** Para ver las traducciones dentro del juego necesitas ejecutar la aplicación de escritorio gratuita y 100% offline **WoW Chat Translator**:
-> [Descargar WoW Chat Translator en GitHub](https://github.com/gabriel/wow-chat-translator/releases)
+> [Descargar WoW Chat Translator en GitHub](https://github.com/GabrielGlezG/wow-chat-translator/releases)
 
 ---
 

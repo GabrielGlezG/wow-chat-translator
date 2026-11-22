@@ -24,7 +24,7 @@ El motor de World of Warcraft almacena los mensajes de chat en un buffer interno
 - **Clientes Legacy:** Fallback automático con frame `OnUpdate`.
 
 > 💡 **Nota Importante:** Para ver las traducciones dentro de la pantalla necesitas la aplicación de escritorio gratuita y 100% offline:
-> 👉 **[Descargar WoW Chat Translator en GitHub](https://github.com/gabriel/wow-chat-translator/releases)**
+> 👉 **[Descargar WoW Chat Translator en GitHub](https://github.com/GabrielGlezG/wow-chat-translator/releases)**
 
 ---
 
@@ -44,4 +44,4 @@ World of Warcraft buffers chat log writes to disk (`Logs/WoWChatLog.txt`) until 
 
 ### Companion Application
 Get the free, offline companion application with the in-game overlay at:
-👉 **[WoW Chat Translator on GitHub](https://github.com/gabriel/wow-chat-translator/releases)**
+👉 **[WoW Chat Translator on GitHub](https://github.com/GabrielGlezG/wow-chat-translator/releases)**

@@ -10,7 +10,7 @@
 - **Comandos dentro del juego:** `/translator status`, `/translator on`, `/translator off`, `/translator flush`.
 
 > 💡 **Nota importante:** Para ver las traducciones dentro del juego necesitas ejecutar la aplicación de escritorio gratuita y 100% offline **WoW Chat Translator**:
-> [Descargar WoW Chat Translator en GitHub](https://github.com/gabriel/wow-chat-translator/releases)
+> [Descargar WoW Chat Translator en GitHub](https://github.com/GabrielGlezG/wow-chat-translator/releases)
 
 ---
 
@@ -18,5 +18,5 @@
 **ForeverChatLogger** is the companion lightweight World of Warcraft Addon that maintains and debounces `/chatlog` to disk in real-time, enabling instantaneous offline translation via the **WoW Chat Translator** desktop overlay application.
 
 - **File:** `ForeverChatLogger-v1.0.0.zip`
-- **SHA-256:** `b690b9b54dc295de4c967d258353762dc8eabf99f84771a41a78cad656c03e99`
+- **SHA-256:** `6361d55d08929e3747809a1baf8001d3366594ec869fbc54a20842b835e021fe`
 - **Size:** `3.4 KB`

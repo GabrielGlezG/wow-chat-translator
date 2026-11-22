@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://curseforge.com/wow/addons/foreverchatlogger"><img src="https://img.shields.io/badge/CurseForge-ForeverChatLogger-f16436.svg" alt="CurseForge"/></a>
-  <a href="https://github.com/gabriel/wow-chat-translator/releases"><img src="https://img.shields.io/github/v/release/gabriel/wow-chat-translator?color=blue&label=App%20Release" alt="GitHub Release"/></a>
+  <a href="https://github.com/GabrielGlezG/wow-chat-translator/releases"><img src="https://img.shields.io/github/v/release/GabrielGlezG/wow-chat-translator?color=blue&label=App%20Release" alt="GitHub Release"/></a>
   <a href="#cumplimiento-anti-cheat"><img src="https://img.shields.io/badge/Anti--Cheat-100%25%20Legal-brightgreen.svg" alt="Anti-Cheat"/></a>
   <a href="#licencia"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License"/></a>
 </p>
@@ -64,7 +64,7 @@ It bridges language gaps by translating party, raid, guild, and whisper messages
 ## 📥 Instalación Rápida
 
 ### Opción 1: Aplicación Portátil (Recomendada)
-1. Descarga la última versión de **[WoWChatTranslator-v1.0.0-Portable.zip](https://github.com/gabriel/wow-chat-translator/releases)**.
+1. Descarga la última versión de **[WoWChatTranslator-v1.0.0-Portable.zip](https://github.com/GabrielGlezG/wow-chat-translator/releases)**.
 2. Descomprime la carpeta en el lugar que prefieras (ej: `C:\WoWChatTranslator`).
 3. Ejecuta `WoWChatTranslator.exe`.
 4. Abre World of Warcraft. El traductor detectará el juego automáticamente. Si es tu primera vez, haz clic en **Sincronizar Addon** en la pestaña de Ajustes del Overlay para instalar `ForeverChatLogger` en tu carpeta `Interface/AddOns/`.

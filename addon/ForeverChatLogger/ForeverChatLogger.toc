@@ -8,7 +8,7 @@
 ## Author: Gabriel
 ## Version: 1.0.0
 ## X-Category: Chat & Communication
-## X-Website: https://github.com/gabriel/wow-chat-translator
+## X-Website: https://github.com/GabrielGlezG/wow-chat-translator
 ## SavedVariables: ForeverChatLoggerDB
 
 ForeverChatLogger.lua

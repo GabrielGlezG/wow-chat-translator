@@ -22,7 +22,7 @@ Siguiendo el estándar de herramientas líderes de World of Warcraft como *Raide
    - **100% Offline y Gratuito:** No requiere internet para traducir, no usa APIs de pago y no tiene costo de suscripción.
 
 👉 **Descarga la aplicación de escritorio acompañante aquí:**  
-**[Descargar WoW Chat Translator en GitHub Releases](https://github.com/gabriel/wow-chat-translator/releases)**
+**[Descargar WoW Chat Translator en GitHub Releases](https://github.com/GabrielGlezG/wow-chat-translator/releases)**
 
 ---
 
@@ -51,4 +51,4 @@ Siguiendo el estándar de herramientas líderes de World of Warcraft como *Raide
 - **Desktop Companion App (GitHub Releases):** Transparent, zero-focus-stealing overlay powered by local MarianMT int8 models.
 
 👉 **Download the free companion desktop app:**  
-**[WoW Chat Translator Desktop App on GitHub](https://github.com/gabriel/wow-chat-translator/releases)**
+**[WoW Chat Translator Desktop App on GitHub](https://github.com/GabrielGlezG/wow-chat-translator/releases)**
