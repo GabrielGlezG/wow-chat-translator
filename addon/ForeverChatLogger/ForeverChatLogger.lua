@@ -3,6 +3,7 @@
 ForeverChatLoggerDB = ForeverChatLoggerDB or {}
 ForeverChatLoggerDB.lastLoaded = date()
 ForeverChatLoggerDB.loadCount = (ForeverChatLoggerDB.loadCount or 0) + 1
+ForeverChatLoggerDB.flushCount = ForeverChatLoggerDB.flushCount or 0
 
 local function EnsureChatLogging()
     if not LoggingChat() then
@@ -44,6 +45,7 @@ local timerFrame = CreateFrame("Frame")
 local function FlushLogToDisk()
     if isFlushing then return end
     isFlushing = true
+    ForeverChatLoggerDB.flushCount = (ForeverChatLoggerDB.flushCount or 0) + 1
 
     if C_Timer and C_Timer.After then
         C_Timer.After(0.20, function()
@@ -82,7 +84,7 @@ frame:SetScript("OnEvent", function(self, event, ...)
         if (event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_LOGIN") and not hasAnnounced then
             hasAnnounced = true
             if DEFAULT_CHAT_FRAME then
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00e5ff[WoW Chat Translator]|r Addon activo (/chatlog ON)")
+                DEFAULT_CHAT_FRAME:AddMessage("|cff00e5ff[WoW Chat Translator]|r Addon activo (/chatlog ON). Escribe |cffFFD100/translator|r para ayuda.")
             end
         end
         return
@@ -101,4 +103,29 @@ SLASH_FOREVERCHATFLUSH1 = "/chatflush"
 SlashCmdList["FOREVERCHATFLUSH"] = function()
     FlushLogToDisk()
     DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[WoW Chat Translator]|r Chat log vaciado a disco.")
+end
+
+SLASH_WOWCHATTRANSLATOR1 = "/translator"
+SLASH_WOWCHATTRANSLATOR2 = "/fcl"
+SlashCmdList["WOWCHATTRANSLATOR"] = function(msg)
+    local cmd = (msg or ""):lower():match("^%s*(%S*)")
+    if cmd == "on" then
+        LoggingChat(true)
+        DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[WoW Chat Translator]|r /chatlog forzado a ENCENDIDO.")
+    elseif cmd == "off" then
+        LoggingChat(false)
+        DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[WoW Chat Translator]|r /chatlog APAGADO.")
+    elseif cmd == "flush" then
+        FlushLogToDisk()
+        DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[WoW Chat Translator]|r Vaciado manual completado.")
+    else
+        local statusColor = LoggingChat() and "|cff00ff00ACTIVO|r" or "|cffff0000INACTIVO|r"
+        DEFAULT_CHAT_FRAME:AddMessage("|cff00e5ff=== WoW Chat Translator (ForeverChatLogger) ===|r")
+        DEFAULT_CHAT_FRAME:AddMessage(" Estado del logger: " .. statusColor .. " | Cargas: " .. (ForeverChatLoggerDB.loadCount or 1))
+        DEFAULT_CHAT_FRAME:AddMessage(" Vaciados automáticos a disco: " .. (ForeverChatLoggerDB.flushCount or 0))
+        DEFAULT_CHAT_FRAME:AddMessage(" Comandos disponibles:")
+        DEFAULT_CHAT_FRAME:AddMessage("   |cffFFD100/translator status|r - Muestra este estado")
+        DEFAULT_CHAT_FRAME:AddMessage("   |cffFFD100/translator flush|r  - Fuerza vaciado inmediato a disco")
+        DEFAULT_CHAT_FRAME:AddMessage("   |cffFFD100/translator on/off|r - Enciende o apaga el logging")
+    end
 end

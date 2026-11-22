@@ -15,3 +15,9 @@ tests/mock_WoWChatLog.txt
 
 # Modelos locales offline (CTranslate2 / MarianMT)
 models/
+
+# Compilación PyInstaller y ejecutables pesados
+build/
+dist/WoWChatTranslator/
+dist/*-Portable.zip
+dist/*.exe

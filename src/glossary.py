@@ -13,7 +13,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+from src.config import PROJECT_ROOT
 DEFAULT_GLOSSARY_PATH = PROJECT_ROOT / "data" / "wow_slang.json"
 
 

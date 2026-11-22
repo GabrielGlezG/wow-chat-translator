@@ -33,6 +33,7 @@ from src.config import DEFAULT_CONFIG_PATH, load_config, save_config
 from src.watcher import ChatMessage
 from src.window_tracker import refocus_wow_async
 from src.autostart import is_windows_autostart_enabled, set_windows_autostart
+from src.addon_installer import is_addon_installed, install_addon_to_wow
 
 CHANNEL_COLORS: dict[str, str] = {
     "grupo": "#A8C8FF",
@@ -756,6 +757,24 @@ class ChatOverlay(QWidget):
         folder_row.addWidget(btn_browse)
         layout.addLayout(folder_row)
 
+        # Fila de Addon ForeverChatLogger
+        addon_row = QHBoxLayout()
+        addon_row.setSpacing(4)
+        lbl_a = QLabel("Addon WoW:")
+        lbl_a.setStyleSheet("color: #BBBBBB; font-size: 8.5pt;")
+        self.lbl_addon_status = QLabel()
+        self._update_addon_status_label()
+        btn_sync_addon = QPushButton("Sincronizar Addon")
+        btn_sync_addon.setStyleSheet(TOP_BTN_STYLE)
+        btn_sync_addon.setToolTip(
+            "Copia o actualiza el addon ForeverChatLogger directamente en Interface/AddOns/"
+        )
+        btn_sync_addon.clicked.connect(self._on_sync_addon)
+        addon_row.addWidget(lbl_a)
+        addon_row.addWidget(self.lbl_addon_status, stretch=1)
+        addon_row.addWidget(btn_sync_addon)
+        layout.addLayout(addon_row)
+
         lbl_anchor = QLabel("Anclaje a WoW (Ocultación Inteligente):")
         lbl_anchor.setStyleSheet("color: #BBBBBB; font-size: 8.5pt; font-weight: bold;")
         layout.addWidget(lbl_anchor)
@@ -819,6 +838,27 @@ class ChatOverlay(QWidget):
 
         layout.addStretch(1)
         return page
+
+    def _update_addon_status_label(self) -> None:
+        """Actualiza el indicador visual del addon en la pestaña de ajustes."""
+        try:
+            installed = is_addon_installed(custom_log_path=self.config.get("wow_chat_log_path", ""))
+            if installed:
+                self.lbl_addon_status.setText("Instalado ✓")
+                self.lbl_addon_status.setStyleSheet("color: #88B04B; font-size: 8pt; font-weight: bold;")
+            else:
+                self.lbl_addon_status.setText("No detectado ✗")
+                self.lbl_addon_status.setStyleSheet("color: #E24A4A; font-size: 8pt; font-weight: bold;")
+        except Exception:
+            self.lbl_addon_status.setText("Desconocido")
+            self.lbl_addon_status.setStyleSheet("color: #888888; font-size: 8pt;")
+
+    @Slot()
+    def _on_sync_addon(self) -> None:
+        """Instala o sincroniza el addon ForeverChatLogger en WoW con 1 solo clic."""
+        ok, msg = install_addon_to_wow(custom_log_path=self.config.get("wow_chat_log_path", ""))
+        self._update_addon_status_label()
+        self.show_status_notice(msg)
 
     @Slot(bool)
     def _on_toggle_auto_hide(self, checked: bool) -> None:
@@ -897,6 +937,7 @@ class ChatOverlay(QWidget):
             self.wow_path_changed.emit(str(log_file))
             self.lbl_path_display.setText(f"{chosen.name} (Logs/WoWChatLog.txt)")
             self.lbl_path_display.setToolTip(str(log_file))
+            self._update_addon_status_label()
             self.show_status_notice(f"Carpeta de WoW: {chosen.name}")
 
     def _on_tab_clicked(self, index: int) -> None:

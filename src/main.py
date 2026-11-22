@@ -46,7 +46,7 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 import pyperclip
 
-from src.config import DEFAULT_CONFIG_PATH, load_config
+from src.config import DEFAULT_CONFIG_PATH, PROJECT_ROOT, load_config
 from src.hotkey_handler import HotkeyHandler
 from src.overlay import ChatOverlay
 from src.translator import WoWTranslator
@@ -123,7 +123,11 @@ def signatures_differ(
 
 
 def create_tray_icon() -> QIcon:
-    """Genera un icono vectorial en memoria estilo WoW ('W') para la bandeja del sistema."""
+    """Genera o carga el icono oficial estilo WoW para la bandeja del sistema."""
+    icon_p = Path(PROJECT_ROOT) / "assets" / "icon.png"
+    if icon_p.exists():
+        return QIcon(str(icon_p))
+
     pixmap = QPixmap(64, 64)
     pixmap.fill(Qt.GlobalColor.transparent)
     painter = QPainter(pixmap)

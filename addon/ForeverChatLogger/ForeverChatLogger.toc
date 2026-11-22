@@ -1,8 +1,14 @@
-## Interface: 16001
-## Title: ForeverChatLogger
-## Notes: Activa /chatlog automaticamente para WoW Chat Translator.
+## Interface: 16001, 30300
+## Title: |cff00e5ffWoW Chat Translator|r (ForeverChatLogger)
+## Title-esES: |cff00e5ffWoW Chat Translator|r (ForeverChatLogger)
+## Title-enUS: |cff00e5ffWoW Chat Translator|r (ForeverChatLogger)
+## Notes: Vaciado y activación automática de /chatlog en tiempo real para WoW Chat Translator.
+## Notes-esES: Vaciado y activación automática de /chatlog en tiempo real para WoW Chat Translator.
+## Notes-enUS: Automatic real-time /chatlog flusher and logger for WoW Chat Translator companion app.
 ## Author: Gabriel
 ## Version: 1.0.0
+## X-Category: Chat & Communication
+## X-Website: https://github.com/gabriel/wow-chat-translator
 ## SavedVariables: ForeverChatLoggerDB
 
 ForeverChatLogger.lua

@@ -5,14 +5,23 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import sys
 from typing import Any
 
 from dotenv import load_dotenv
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_CONFIG_PATH = PROJECT_ROOT / "config.json"
+if getattr(sys, "frozen", False):
+    BUNDLE_ROOT = Path(sys._MEIPASS)
+    APP_ROOT = Path(sys.executable).parent
+else:
+    BUNDLE_ROOT = Path(__file__).resolve().parent.parent
+    APP_ROOT = BUNDLE_ROOT
 
-load_dotenv(PROJECT_ROOT / ".env")
+PROJECT_ROOT = BUNDLE_ROOT
+DEFAULT_CONFIG_PATH = APP_ROOT / "config.json"
+
+load_dotenv(APP_ROOT / ".env")
+load_dotenv(BUNDLE_ROOT / ".env")
 
 
 DEFAULT_CONFIG: dict[str, Any] = {
