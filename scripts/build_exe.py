@@ -15,6 +15,9 @@ import sys
 import zipfile
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 DIST_DIR = PROJECT_ROOT / "dist"
 SPEC_FILE = PROJECT_ROOT / "WoWChatTranslator.spec"
 
@@ -95,8 +98,20 @@ def package_portable_zip() -> Path | None:
 
 def main() -> int:
     DIST_DIR.mkdir(parents=True, exist_ok=True)
-    if not build_executable():
-        return 1
+    skip_build = "--skip-build" in sys.argv or "-s" in sys.argv
+    if not skip_build:
+        if not build_executable():
+            return 1
+    else:
+        print("⏩ Saltando compilación de PyInstaller (--skip-build), empaquetando carpeta existente...")
+
+    # Asegurar que config.json y README.md estén en la carpeta raíz distribuible
+    output_dir = DIST_DIR / "WoWChatTranslator"
+    if (PROJECT_ROOT / "config.json").exists() and not (output_dir / "config.json").exists():
+        shutil.copy2(PROJECT_ROOT / "config.json", output_dir / "config.json")
+    if (PROJECT_ROOT / "README.md").exists() and not (output_dir / "README.md").exists():
+        shutil.copy2(PROJECT_ROOT / "README.md", output_dir / "README.md")
+
     zip_p = package_portable_zip()
     return 0 if zip_p else 1
 

@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 
 block_cipher = None
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(SPECPATH).resolve() if 'SPECPATH' in globals() else Path('.').resolve()
 
 added_files = [
     (str(PROJECT_ROOT / 'models'), 'models'),
@@ -55,7 +55,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
@@ -71,7 +71,7 @@ coll = COLLECT(
     a.zipfiles,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     name='WoWChatTranslator',
 )
