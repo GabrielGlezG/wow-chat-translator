@@ -7,6 +7,7 @@ sin que el jugador tenga que buscar carpetas ni descomprimir archivos manualment
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 import shutil
 import sys
@@ -84,9 +85,14 @@ def install_addon_to_wow(addons_dir: Path | None = None, custom_log_path: str = 
     dest_dir = target_dir / ADDON_FOLDER_NAME
     try:
         dest_dir.mkdir(parents=True, exist_ok=True)
-        for item in src_addon_dir.iterdir():
-            if item.is_file() and item.suffix in (".lua", ".toc", ".xml"):
-                shutil.copy2(item, dest_dir / item.name)
+        for root, dirs, files in os.walk(src_addon_dir):
+            rel_dir = Path(root).relative_to(src_addon_dir)
+            target_sub = dest_dir / rel_dir
+            target_sub.mkdir(parents=True, exist_ok=True)
+            for file_name in files:
+                p = Path(root) / file_name
+                if p.suffix in (".lua", ".toc", ".xml", ".md"):
+                    shutil.copy2(p, target_sub / file_name)
 
         logger.info("Addon ForeverChatLogger instalado con éxito en: %s", dest_dir)
         return True, f"Addon instalado con éxito en {dest_dir}"

@@ -7,6 +7,7 @@ requerida por los servidores de validación de CurseForge y Wago.io.
 from __future__ import annotations
 
 import hashlib
+import os
 from pathlib import Path
 import re
 import sys
@@ -50,12 +51,15 @@ def package_addon() -> Path:
 
     # Crear ZIP con carpeta raíz ForeverChatLogger/
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-        for item in ADDON_SRC_DIR.iterdir():
-            if item.name.startswith(".") or item.suffix in (".pyc", ".bak"):
-                continue
-            arcname = f"ForeverChatLogger/{item.name}"
-            zf.write(item, arcname)
-            print(f"  + {arcname} ({item.stat().st_size} bytes)")
+        for root, dirs, files in os.walk(ADDON_SRC_DIR):
+            for file_name in files:
+                full_path = Path(root) / file_name
+                if file_name.startswith(".") or full_path.suffix in (".pyc", ".bak"):
+                    continue
+                rel_path = full_path.relative_to(ADDON_SRC_DIR)
+                arcname = f"ForeverChatLogger/{rel_path.as_posix()}"
+                zf.write(full_path, arcname)
+                print(f"  + {arcname} ({full_path.stat().st_size} bytes)")
 
     sha256_hash = compute_sha256(zip_path)
     file_size_kb = zip_path.stat().st_size / 1024.0

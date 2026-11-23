@@ -2,13 +2,16 @@
 ## Title: |cff00e5ffWoW Chat Translator|r (ForeverChatLogger)
 ## Title-esES: |cff00e5ffWoW Chat Translator|r (ForeverChatLogger)
 ## Title-enUS: |cff00e5ffWoW Chat Translator|r (ForeverChatLogger)
-## Notes: Vaciado y activación automática de /chatlog en tiempo real para WoW Chat Translator.
-## Notes-esES: Vaciado y activación automática de /chatlog en tiempo real para WoW Chat Translator.
-## Notes-enUS: Automatic real-time /chatlog flusher and logger for WoW Chat Translator companion app.
+## Notes: Traducción de chat en tiempo real 100% in-game (Inglés <-> Español) y vaciado de /chatlog.
+## Notes-esES: Traducción de chat en tiempo real 100% in-game (Inglés <-> Español) y vaciado de /chatlog.
+## Notes-enUS: Real-time in-game chat translator (English <-> Spanish) and /chatlog flusher.
 ## Author: Gabriel
-## Version: 1.0.0
+## Version: 1.1.0
 ## X-Category: Chat & Communication
 ## X-Website: https://github.com/GabrielGlezG/wow-chat-translator
 ## SavedVariables: ForeverChatLoggerDB
 
+Data\SlangData.lua
+Data\DictionaryData.lua
+Engine\TranslatorEngine.lua
 ForeverChatLogger.lua
