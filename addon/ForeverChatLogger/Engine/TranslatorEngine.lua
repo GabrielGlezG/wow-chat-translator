@@ -1,12 +1,12 @@
 --[[
-    TranslatorEngine.lua - Motor gramatical de traducción en Lua puro para WoW.
+    TranslatorEngine.lua - Motor optimizado de traducción en Lua puro con coincidencia N-Gram.
     WoW Chat Translator (ForeverChatLogger)
 ]]
 
 WoWChatTranslatorEngine = WoWChatTranslatorEngine or {}
 local Engine = WoWChatTranslatorEngine
 
--- Adjetivos comunes para la regla de inversión sintáctica (Adjetivo + Sustantivo -> Sustantivo + Adjetivo)
+-- Adjetivos para regla de inversión sintáctica (Adjetivo + Sustantivo -> Sustantivo + Adjetivo)
 local ADJECTIVES_MAP = {
     ["big"] = "grande",
     ["small"] = "pequeño",
@@ -28,13 +28,16 @@ local ADJECTIVES_MAP = {
     ["next"] = "siguiente"
 }
 
--- Sustantivos comunes receptores de adjetivos
+-- Sustantivos receptores de adjetivos
 local NOUNS_MAP = {
     ["door"] = "puerta",
     ["doors"] = "puertas",
     ["key"] = "llave",
     ["keys"] = "llaves",
     ["boss"] = "jefe",
+    ["bosses"] = "jefes",
+    ["dragon"] = "dragón",
+    ["dragons"] = "dragones",
     ["mob"] = "enemigo",
     ["mobs"] = "enemigos",
     ["chest"] = "cofre",
@@ -42,15 +45,14 @@ local NOUNS_MAP = {
     ["exit"] = "salida",
     ["entrance"] = "entrada",
     ["target"] = "objetivo",
-    ["dragon"] = "dragón",
     ["portal"] = "portal",
     ["item"] = "objeto",
-    ["pack"] = "grupo de mobs",
+    ["pack"] = "pack",
     ["side"] = "lado",
     ["room"] = "sala"
 }
 
--- Normalización de contracciones informales en inglés
+-- Normalizador de contracciones
 function Engine.NormalizeContractions(text)
     if not text then return "" end
     local s = " " .. text:lower() .. " "
@@ -76,170 +78,62 @@ function Engine.NormalizeContractions(text)
     return s:match("^%s*(.-)%s*$")
 end
 
--- Plantillas sintácticas de oraciones comunes (Sujeto + Verbo + Complemento)
-local SENTENCE_TEMPLATES = {
-    -- Preguntas de localización y ayuda
-    {
-        pat = "^can someone tell me where (.+) is%??$",
-        rep = "¿Alguien puede decirme dónde está %1?"
-    },
-    {
-        pat = "^can someone tell me (.+)%??$",
-        rep = "¿Alguien puede decirme %1?"
-    },
-    {
-        pat = "^does anyone know where (.+) is%??$",
-        rep = "¿Alguien sabe dónde está %1?"
-    },
-    {
-        pat = "^does anyone know (.+)%??$",
-        rep = "¿Alguien sabe %1?"
-    },
-    {
-        pat = "^where is (?:the )?(.+)%??$",
-        rep = "¿Dónde está %1?"
-    },
-    {
-        pat = "^who has (?:the )?(.+)%??$",
-        rep = "¿Quién tiene %1?"
-    },
-    {
-        pat = "^anyone (?:have|has) (?:the )?(.+)%??$",
-        rep = "¿Alguien tiene %1?"
-    },
-    -- Peticiones de tiempo y espera
-    {
-        pat = "^i need to go eat dinner,? (.+)$",
-        rep = "Tengo que ir a cenar, %1"
-    },
-    {
-        pat = "^i need to go eat dinner$",
-        rep = "Tengo que ir a cenar"
-    },
-    {
-        pat = "^i have to go,? (.+)$",
-        rep = "Me tengo que ir, %1"
-    },
-    {
-        pat = "^i have to go$",
-        rep = "Me tengo que ir"
-    },
-    {
-        pat = "^wait for me (?:for )?(.+)$",
-        rep = "Espérenme %1"
-    },
-    {
-        pat = "^wait for me$",
-        rep = "Espérenme"
-    },
-    {
-        pat = "^wait for (.+)$",
-        rep = "Esperen a %1"
-    },
-    {
-        pat = "^can you wait (?:for )?(.+)%??$",
-        rep = "¿Pueden esperar %1?"
-    },
-    -- Problemas técnicos y caídas
-    {
-        pat = "^my computer is having issues and restarting$",
-        rep = "Mi computadora tiene problemas y se está reiniciando"
-    },
-    {
-        pat = "^my pc is restarting$",
-        rep = "Mi PC se está reiniciando"
-    },
-    {
-        pat = "^my game crashed and i lost my buff$",
-        rep = "Se me cerró el juego y perdí mi buff"
-    },
-    {
-        pat = "^my game crashed (.+)$",
-        rep = "Se me cerró el juego (crash) %1"
-    },
-    {
-        pat = "^i got dc,? (.+)$",
-        rep = "Me desconecté (DC), %1"
-    },
-    -- Tácticas y preguntas de combate
-    {
-        pat = "^why did you pull (.+) when (.+)$",
-        rep = "¿Por qué puleaste a %1 cuando %2?"
-    },
-    {
-        pat = "^why did you pull (.+)%??$",
-        rep = "¿Por qué puleaste a %1?"
-    },
-    {
-        pat = "^why did (.+) leave (?:the )?(?:group|party)%??$",
-        rep = "¿Por qué se fue %1 del grupo?"
-    },
-    {
-        pat = "^why did (.+) leave%??$",
-        rep = "¿Por qué se fue %1?"
-    },
-    {
-        pat = "^do we skip (.+)%??$",
-        rep = "¿Saltamos a %1?"
-    },
-    {
-        pat = "^kill (.+) first$",
-        rep = "Maten a %1 primero"
-    },
-    {
-        pat = "^focus (.+) first$",
-        rep = "Enfoquen a %1 primero"
-    },
-    {
-        pat = "^stack on (?:the )?(.+)$",
-        rep = "Júntense en %1"
-    },
-    {
-        pat = "^my (.+) is on cd$",
-        rep = "Mi %1 está en enfriamiento (CD)"
-    }
-}
-
--- Función principal de coincidencia por plantilla sintáctica
-function Engine.MatchTemplates(text)
+-- Traducción de frases compuestas (N-Grams)
+function Engine.MatchPhrases(text)
+    local phrases = WoWChatTranslatorData.Phrases or {}
     local lower = text:lower()
-    for _, t in ipairs(SENTENCE_TEMPLATES) do
-        local m1, m2 = lower:match(t.pat)
-        if m1 and m2 then
-            -- Traducir las variables capturadas si existen
-            local t1 = Engine.TranslateSimplePhrase(m1)
-            local t2 = Engine.TranslateSimplePhrase(m2)
-            return t.rep:gsub("%%1", t1):gsub("%%2", t2)
-        elseif m1 then
-            local t1 = Engine.TranslateSimplePhrase(m1)
-            return t.rep:gsub("%%1", t1)
+    
+    -- Limpieza de signos para coincidencia de frase
+    local clean_lower = lower:gsub("[%.,%?!]", ""):match("^%s*(.-)%s*$")
+
+    for _, entry in ipairs(phrases) do
+        -- Si coincide exactamente la frase completa
+        if clean_lower == entry.en then
+            return entry.es
         end
     end
+
+    -- Búsqueda de sub-frases dentro del texto
+    local result = lower
+    local matched_any = false
+    for _, entry in ipairs(phrases) do
+        local pat = "%f[%a]" .. entry.en:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1") .. "%f[%A]"
+        if result:find(pat) then
+            result = result:gsub(pat, "___PHRASE_" .. entry.es:gsub("%%", "%%%%") .. "___")
+            matched_any = true
+        end
+    end
+
+    if matched_any then
+        -- Restaurar las frases traducidas
+        result = result:gsub("___PHRASE_(.-)___", "%1")
+        return result
+    end
+
     return nil
 end
 
--- Traducción léxica palabra a palabra con reglas de inversión gramatical
-function Engine.TranslateSimplePhrase(phrase)
-    if not phrase or phrase == "" then return "" end
+-- Traducción palabra a palabra limpia con inversión gramatical
+function Engine.TranslateWords(text)
     local dict = WoWChatTranslatorData.GeneralDict or {}
     local slang = WoWChatTranslatorData.FastSlang or {}
     local dungeons = WoWChatTranslatorData.Dungeons or {}
 
-    -- Tokenizar respetando espacios y puntuación básica
-    local words = {}
-    for word in phrase:gmatch("[%w']+|?[^%w%s]?") do
-        table.insert(words, word)
+    -- Tokenizar respetando puntuación
+    local tokens = {}
+    for token in text:gmatch("[%w']+|?[^%w%s]?") do
+        table.insert(tokens, token)
     end
 
     local out = {}
     local i = 1
-    while i <= #words do
-        local w = words[i]
+    while i <= #tokens do
+        local w = tokens[i]
         local w_clean = w:lower():gsub("[%.,%?!']", "")
 
-        -- Regla Sintáctica de Inversión: [Adjetivo] + [Sustantivo] -> [Sustantivo] [Adjetivo]
+        -- Regla de inversión: [Adjetivo] + [Sustantivo] -> [Sustantivo] [Adjetivo]
         -- Ejemplo: "blue key" -> "llave azul"
-        local next_w = words[i + 1]
+        local next_w = tokens[i + 1]
         local next_clean = next_w and next_w:lower():gsub("[%.,%?!']", "") or ""
 
         if ADJECTIVES_MAP[w_clean] and NOUNS_MAP[next_clean] then
@@ -248,12 +142,10 @@ function Engine.TranslateSimplePhrase(phrase)
             table.insert(out, noun_tr .. " " .. adj_tr)
             i = i + 2
         else
-            -- Búsqueda jerárquica: Dungeons -> Slang -> GeneralDict
+            -- Búsqueda jerárquica limpia
             local tr = dungeons[w_clean] or slang[w_clean] or dict[w_clean]
             if tr then
-                -- Si tiene opciones múltiples separadas por '/', tomar la primera más natural
-                local first_choice = tr:match("^([^/]+)") or tr
-                table.insert(out, first_choice:match("^%s*(.-)%s*$"))
+                table.insert(out, tr)
             else
                 table.insert(out, w)
             end
@@ -261,10 +153,10 @@ function Engine.TranslateSimplePhrase(phrase)
         end
     end
 
-    local result = table.concat(out, " ")
-    -- Limpieza de espacios antes de signos de puntuación
-    result = result:gsub("%s+([%.,%?!])", "%1")
-    return result
+    local res = table.concat(out, " ")
+    -- Limpieza de puntuación
+    res = res:gsub("%s+([%.,%?!])", "%1")
+    return res
 end
 
 -- Función principal de traducción EN -> ES
@@ -272,72 +164,74 @@ function Engine.TranslateEnToEs(message)
     if not message or message == "" then return message end
 
     -- Preservar hipervínculos de WoW (|c...|Hitem:...|h[...]|h|r)
-    local tokens = {}
+    local token_map = {}
     local token_idx = 0
     local protected = message:gsub("(|c%x+|H[^|]+|h%[[^%]]+%]%|h|r)", function(link)
         token_idx = token_idx + 1
         local key = "___WOWTOKEN_" .. token_idx .. "___"
-        tokens[key] = link
+        token_map[key] = link
         return key
     end)
 
     local clean = protected:match("^%s*(.-)%s*$")
-    local lower = clean:lower()
+    local lower = clean:lower():gsub("[%.,%?!]", "")
 
-    -- 1. Coincidencia exacta de jerga rápida
+    -- 1. Coincidencia rápida en jerga exacta
     if WoWChatTranslatorData.FastSlang[lower] then
         local res = WoWChatTranslatorData.FastSlang[lower]
-        for k, v in pairs(tokens) do res = res:gsub(k, v) end
+        for k, v in pairs(token_map) do res = res:gsub(k, v) end
         return res
     end
 
-    -- 2. Coincidencia de patrones compuestos de jerga
-    if WoWChatTranslatorData.SlangPatterns then
-        for _, entry in ipairs(WoWChatTranslatorData.SlangPatterns) do
-            if lower:match(entry.pat) then
-                local res = entry.rep
-                for k, v in pairs(tokens) do res = res:gsub(k, v) end
-                return res
+    -- 2. Coincidencia en banco de N-Gramas y frases compuestas
+    local phrase_match = Engine.MatchPhrases(clean)
+    if phrase_match then
+        for k, v in pairs(token_map) do phrase_match = phrase_match:gsub(k, v) end
+        -- Añadir signo ¿ si es pregunta
+        if clean:find("%?$") or phrase_match:find("^%s*dónde") or phrase_match:find("^%s*quién") or phrase_match:find("^%s*por qué") then
+            if not phrase_match:find("^¿") then
+                phrase_match = "¿" .. phrase_match
+            end
+            if not phrase_match:find("%?$") then
+                phrase_match = phrase_match .. "?"
             end
         end
+        return phrase_match:sub(1, 1):upper() .. phrase_match:sub(2)
     end
 
-    -- 3. Normalizar contracciones (don't -> no, i'm -> estoy, etc.)
+    -- 3. Normalizar contracciones
     local normalized = Engine.NormalizeContractions(clean)
 
-    -- 4. Coincidencia por plantilla sintáctica de oraciones complejas
-    local template_match = Engine.MatchTemplates(normalized)
-    if template_match then
-        for k, v in pairs(tokens) do template_match = template_match:gsub(k, v) end
-        -- Capitalizar primera letra
-        return template_match:sub(1, 1):upper() .. template_match:sub(2)
-    end
+    -- 4. Traducción léxica limpia
+    local translated = Engine.TranslateWords(normalized)
+    for k, v in pairs(token_map) do translated = translated:gsub(k, v) end
 
-    -- 5. Traducción léxico-gramatical general
-    local translated = Engine.TranslateSimplePhrase(normalized)
-    for k, v in pairs(tokens) do translated = translated:gsub(k, v) end
-
-    -- Si el texto traducido es idéntico al original, no amerita mostrar subtítulo redundante
+    -- Si no cambió nada, no mostrar subtítulo redundante
     if translated:lower() == clean:lower() then
         return nil
     end
 
-    -- Capitalizar primera letra
+    -- Formatear interrogación si corresponde
+    if clean:find("%?$") and not translated:find("^¿") then
+        translated = "¿" .. translated
+    end
+
     return translated:sub(1, 1):upper() .. translated:sub(2)
 end
 
--- Función de traducción inversa ES -> EN para el comando /en <mensaje>
+-- Función de traducción inversa ES -> EN para responder (/en <mensaje>)
 function Engine.TranslateEsToEn(message)
     if not message or message == "" then return message end
     local lower = message:lower():match("^%s*(.-)%s*$")
+    local clean_lower = lower:gsub("[%.,%?!]", "")
     local rev = WoWChatTranslatorData.ReverseDict or {}
 
-    -- Coincidencia exacta en diccionario inverso
-    if rev[lower] then
-        return rev[lower]
+    -- Coincidencia directa de frase
+    if rev[clean_lower] then
+        return rev[clean_lower]
     end
 
-    -- Traducción aproximada de frases
+    -- Traducción aproximada de palabras
     local out = {}
     for word in lower:gmatch("%S+") do
         local clean = word:gsub("[%.,%?!]", "")

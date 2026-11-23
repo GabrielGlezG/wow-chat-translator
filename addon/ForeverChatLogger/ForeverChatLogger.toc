@@ -12,6 +12,7 @@
 ## SavedVariables: ForeverChatLoggerDB
 
 Data\SlangData.lua
+Data\PhrasesData.lua
 Data\DictionaryData.lua
 Engine\TranslatorEngine.lua
 ForeverChatLogger.lua
