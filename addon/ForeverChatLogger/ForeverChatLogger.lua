@@ -236,74 +236,95 @@ end
 
 -- Callback global para atajo configurado en Teclado de WoW (Bindings.xml)
 function _G.WoWChatTranslator_OnHotkey()
-    addonTable.HandleEditBoxTranslate()
+    local eb = addonTable.GetActiveEditBox()
+    if eb and eb:IsVisible() then
+        addonTable.HandleEditBoxTranslate(eb)
+    end
 end
 
 local hookedEditBoxes = {}
 
 local function OnEditBoxKeyDown(self, key)
-    -- Detectar Alt+T (o alt+t) sin Ctrl ni Shift
-    if (key == "T" or key == "t") and IsAltKeyDown() and not IsControlKeyDown() and not IsShiftKeyDown() then
+    -- Detectar Alt+T (o alt+t) en cualquier disposición de teclado
+    local isT = (key == "T" or key == "t")
+    local isAlt = IsAltKeyDown() or (IsLeftAltKeyDown and IsLeftAltKeyDown()) or (IsRightAltKeyDown and IsRightAltKeyDown())
+
+    if isT and isAlt and not IsShiftKeyDown() then
         addonTable.HandleEditBoxTranslate(self)
+        if self.SetPropagateKeyboardInput then
+            self:SetPropagateKeyboardInput(false)
+        end
+        return true -- Consumido con éxito
     end
+    return false
 end
 
 local function HookChatEditBox(editBox)
     if not editBox or hookedEditBoxes[editBox] then return end
     hookedEditBoxes[editBox] = true
-    if editBox.HookScript then
-        editBox:HookScript("OnKeyDown", OnEditBoxKeyDown)
-    elseif editBox.SetScript then
-        local orig = editBox:GetScript("OnKeyDown")
-        editBox:SetScript("OnKeyDown", function(self, key, ...)
-            OnEditBoxKeyDown(self, key)
-            if orig then return orig(self, key, ...) end
-        end)
-    end
+
+    -- Hook transparente de OnKeyDown preservando la cadena original
+    local origOnKeyDown = editBox:GetScript("OnKeyDown")
+    editBox:SetScript("OnKeyDown", function(self, key, ...)
+        if OnEditBoxKeyDown(self, key) then
+            return -- Consumir la tecla para que no añada 't' al texto
+        end
+        if origOnKeyDown then
+            return origOnKeyDown(self, key, ...)
+        end
+    end)
 end
 
 local function HookAllChatEditBoxes()
-    local numWindows = NUM_CHAT_WINDOWS or 10
-    for i = 1, numWindows do
-        local eb = _G["ChatFrame" .. i .. "EditBox"]
-        if eb then HookChatEditBox(eb) end
-    end
+    -- 1. Global principal de WotLK 3.3.5a
     if ChatFrameEditBox then
         HookChatEditBox(ChatFrameEditBox)
+    end
+    -- 2. EditBox de DEFAULT_CHAT_FRAME
+    if DEFAULT_CHAT_FRAME and DEFAULT_CHAT_FRAME.editBox then
+        HookChatEditBox(DEFAULT_CHAT_FRAME.editBox)
+    end
+    -- 3. EditBoxes adicionales si existen
+    local numWindows = NUM_CHAT_WINDOWS or 10
+    for i = 1, numWindows do
+        local cf = _G["ChatFrame" .. i]
+        if cf and cf.editBox then
+            HookChatEditBox(cf.editBox)
+        end
+        local eb = _G["ChatFrame" .. i .. "EditBox"]
+        if eb then
+            HookChatEditBox(eb)
+        end
     end
 end
 
 local function CreateEditBoxTranslateButton()
-    local parent = ChatFrame1EditBox or ChatFrameEditBox
+    local parent = ChatFrameEditBox or (DEFAULT_CHAT_FRAME and DEFAULT_CHAT_FRAME.editBox) or ChatFrame1EditBox
     if not parent or _G["WoWChatTranslator_QuickBtn"] then return end
 
-    local btn = CreateFrame("Button", "WoWChatTranslator_QuickBtn", parent)
-    btn:SetSize(44, 16)
-    btn:SetPoint("RIGHT", parent, "RIGHT", -4, 0)
+    local btn = CreateFrame("Button", "WoWChatTranslator_QuickBtn", parent, "UIPanelButtonTemplate")
+    btn:SetSize(64, 20)
+    btn:SetPoint("LEFT", parent, "RIGHT", 4, 0)
+    btn:SetText("|cff00e5ffAlt+T|r")
 
-    local text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    text:SetPoint("CENTER", btn, "CENTER", 0, 0)
-    text:SetText("|cff00e5ff[Alt+T]|r")
-    btn.text = text
+    btn:SetScript("OnClick", function()
+        local activeEb = addonTable.GetActiveEditBox() or parent
+        addonTable.HandleEditBoxTranslate(activeEb)
+    end)
 
     btn:SetScript("OnEnter", function(self)
-        self.text:SetText("|cffffff00[Alt+T]|r")
         if GameTooltip then
             GameTooltip:SetOwner(self, "ANCHOR_TOP")
             GameTooltip:AddLine("|cff00e5ffWoW Chat Translator|r (ES -> EN)")
             GameTooltip:AddLine("Traducir texto actual al inglés gamer antes de enviar.", 1, 1, 1)
             GameTooltip:AddLine("|cffFFD100Atajo rápido:|r Presiona |cff00ff00Alt+T|r mientras escribes en el chat.", 0.8, 0.8, 0.8)
-            GameTooltip:AddLine("O haz clic aquí para traducir en el acto.", 0.8, 0.8, 0.8)
+            GameTooltip:AddLine("O haz clic en este botón para traducir en el acto.", 0.8, 0.8, 0.8)
+            GameTooltip:AddLine("Luego presiona |cff00ff00Enter|r para enviar el mensaje traducido.", 1, 0.82, 0.0)
             GameTooltip:Show()
         end
     end)
     btn:SetScript("OnLeave", function(self)
-        self.text:SetText("|cff00e5ff[Alt+T]|r")
         if GameTooltip then GameTooltip:Hide() end
-    end)
-    btn:SetScript("OnClick", function()
-        local activeEb = GetActiveEditBox() or parent
-        addonTable.HandleEditBoxTranslate(activeEb)
     end)
 end
 
@@ -478,11 +499,25 @@ initFrame:SetScript("OnEvent", function(self, event)
     -- Enganchar cajas de texto de chat para el atajo Alt+T y botón [Alt+T]
     HookAllChatEditBoxes()
     CreateEditBoxTranslateButton()
-    if hooksecurefunc and ChatEdit_ActivateChat and not addonTable.chatEditHooked then
-        addonTable.chatEditHooked = true
-        hooksecurefunc("ChatEdit_ActivateChat", function(editBox)
-            HookChatEditBox(editBox)
-        end)
+    if not addonTable.chatHooksDone then
+        addonTable.chatHooksDone = true
+        if hooksecurefunc and ChatEdit_ActivateChat then
+            hooksecurefunc("ChatEdit_ActivateChat", function(editBox)
+                if editBox then HookChatEditBox(editBox) end
+            end)
+        end
+        if hooksecurefunc and ChatFrame_OpenChat then
+            hooksecurefunc("ChatFrame_OpenChat", function(text, chatFrame)
+                local eb = (chatFrame and chatFrame.editBox) or addonTable.GetActiveEditBox() or ChatFrameEditBox
+                if eb then HookChatEditBox(eb) end
+            end)
+        end
+        if ChatFrameEditBox and ChatFrameEditBox.HookScript then
+            ChatFrameEditBox:HookScript("OnShow", function(self)
+                HookChatEditBox(self)
+                CreateEditBoxTranslateButton()
+            end)
+        end
     end
 
     if not announced and (event == "PLAYER_LOGIN" or event == "PLAYER_ENTERING_WORLD") then
