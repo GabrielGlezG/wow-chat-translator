@@ -178,6 +178,76 @@ _G.TranslateChat = function(text)
     return text, changed
 end
 
+-- Traducción limpia en español (sin paréntesis inline) para la pestaña integrada y subtítulos
+function addonTable.TranslateClean(text)
+    if not text or text == "" then return text, false end
+
+    -- 1. Intentar plantilla de frase completa (Core/Templates.lua)
+    local sentence = addonTable.TemplateSentence and addonTable.TemplateSentence(text)
+    if sentence and sentence ~= "" then
+        return sentence, true
+    end
+
+    -- 2. Sustitución limpia de frases y palabras basada en diccionarios
+    local done = {}
+    local working = HideLinks(text, done)
+    local changed = false
+    local textLower = string_lower(working)
+    local seen = {}
+
+    -- 2a. Frases multi-palabra (ordenadas por longitud)
+    for word in string_gmatch(textLower, "[%w']+") do
+        local bucket = MultiWordByFirst[word]
+        if bucket and not seen[word] then
+            seen[word] = true
+            for _, phrase in ipairs(bucket) do
+                if string_find(textLower, phrase, 1, true) then
+                    local repl = MultiWordPatterns[phrase]
+                    local pat = CaseInsensitivePattern(phrase)
+                    local count
+                    working, count = string_gsub(working, pat, function()
+                        return Stash(done, repl)
+                    end)
+                    if count > 0 then
+                        changed = true
+                        textLower = string_lower(working)
+                    end
+                end
+            end
+        end
+    end
+
+    -- 2b. Palabras individuales
+    working = string_gsub(working, "()([%a%d']+)()", function(s, word, e)
+        if (s > 2 and string_find(working, "^%w%.", s - 2)) or string_find(working, "^%.%w", e) then
+            return word
+        end
+        local lowerWord = string_lower(word)
+        local tr = MasterDict[lowerWord]
+        if tr then
+            changed = true
+            return Stash(done, tr)
+        end
+        return word
+    end)
+
+    working = Restore(working, done)
+
+    if changed then
+        -- Añadir ¿ si es pregunta
+        if text:find("%?$") and not working:find("^¿") then
+            working = "¿" .. working
+        end
+        -- Capitalizar primer carácter si es ASCII
+        local b = string_byte(working, 1)
+        if b and b < 128 then
+            working = working:sub(1, 1):upper() .. working:sub(2)
+        end
+    end
+
+    return working, changed
+end
+
 -- La usa también Core/Outgoing.lua para el sentido contrario.
 addonTable.CaseInsensitivePattern = CaseInsensitivePattern
 addonTable.HideLinks = HideLinks

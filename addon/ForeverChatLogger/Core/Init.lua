@@ -38,6 +38,8 @@ local DEFAULT_SETTINGS = {
     -- Jerga en otros idiomas (Data/Origen/): apagada hasta que el jugador la pida.
     srcEnUS = true, -- el diccionario principal: la jerga en inglés
     templates = true, -- frase completa debajo del mensaje (Core/Templates.lua)
+    showSubtitlesInMainChat = true, -- subtítulo limpio en el chat principal
+    bilingualTab = false, -- en la pestaña Traductor: false = solo español limpio, true = bilingüe
     srcKoKR = false,
     srcZhCN = false,
 }

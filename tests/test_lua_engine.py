@@ -94,3 +94,20 @@ def test_outgoing_reverse_translation_syntax():
     assert "function addonTable.TranslateOutgoing" in outgoing
     assert "ReverseDict" in outgoing
     assert "ReverseByFirst" in outgoing
+
+
+def test_translate_clean_syntax():
+    translator = (ADDON_DIR / "Core" / "Translator.lua").read_text(encoding="utf-8")
+    assert "function addonTable.TranslateClean" in translator
+    assert "TemplateSentence" in translator
+    assert "HideLinks" in translator
+    assert "Restore" in translator
+
+
+def test_integrated_chat_tab_functions():
+    fcl = (ADDON_DIR / "ForeverChatLogger.lua").read_text(encoding="utf-8")
+    assert "addonTable.EnsureTranslatorTab" in fcl
+    assert "addonTable.GetTranslatorChatFrame" in fcl
+    assert "addonTable.SendToTranslatorTab" in fcl
+    assert 'FCF_OpenNewWindow' in fcl
+    assert 'TRANSLATOR_TAB_NAME = "Traductor"' in fcl

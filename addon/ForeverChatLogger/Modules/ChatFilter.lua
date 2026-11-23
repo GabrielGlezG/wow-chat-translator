@@ -38,9 +38,25 @@ local function Filter(self, event, text, author, ...)
         addonTable.FlushLogToDisk()
     end
 
-    local translated, changed = _G.TranslateChat(text)
-    -- Devolver false deja pasar el mensaje; solo se reemplaza si hubo cambio.
-    if changed then return false, translated, author, ... end
+    -- Obtener traducción limpia en español (usando plantillas semánticas y diccionarios)
+    local cleanTr, changed = nil, false
+    if addonTable.TranslateClean then
+        cleanTr, changed = addonTable.TranslateClean(text)
+    end
+
+    if changed and cleanTr and cleanTr ~= "" then
+        -- 1. Enviar siempre a la pestaña integrada "Traductor"
+        if addonTable.SendToTranslatorTab then
+            addonTable.SendToTranslatorTab(event, text, cleanTr, author)
+        end
+
+        -- 2. Si están activados los subtítulos en el chat principal
+        local settings = WoWTranslatorDB and WoWTranslatorDB.settings
+        if settings and settings.showSubtitlesInMainChat ~= false then
+            local decorated = text .. "\n|cff00e5ff  └── [ES] |r|cfffff0c0" .. cleanTr .. "|r"
+            return false, decorated, author, ...
+        end
+    end
 end
 
 function addonTable.InstallChatFilter()
