@@ -111,3 +111,43 @@ def test_integrated_chat_tab_functions():
     assert "addonTable.SendToTranslatorTab" in fcl
     assert 'FCF_OpenNewWindow' in fcl
     assert 'TRANSLATOR_TAB_NAME = "Traductor"' in fcl
+
+
+def test_bindings_and_alt_t_hotkey():
+    bindings = (ADDON_DIR / "Bindings.xml").read_text(encoding="utf-8")
+    assert 'name="WOWCHATTRANSLATOR_HOTKEY"' in bindings
+    assert 'default="ALT-T"' in bindings
+    assert 'WoWChatTranslator_OnHotkey' in bindings
+
+    toc = (ADDON_DIR / "ForeverChatLogger.toc").read_text(encoding="utf-8")
+    assert "Bindings.xml" in toc
+
+    es_locale = (ADDON_DIR / "Locales" / "esES.lua").read_text(encoding="utf-8")
+    en_locale = (ADDON_DIR / "Locales" / "enUS.lua").read_text(encoding="utf-8")
+    assert 'BINDING_HEADER_WOWCHATTRANSLATOR' in es_locale
+    assert 'BINDING_NAME_WOWCHATTRANSLATOR_HOTKEY' in es_locale
+    assert 'BINDING_HEADER_WOWCHATTRANSLATOR' in en_locale
+    assert 'BINDING_NAME_WOWCHATTRANSLATOR_HOTKEY' in en_locale
+
+
+def test_alt_t_editbox_handler_and_quick_button():
+    fcl = (ADDON_DIR / "ForeverChatLogger.lua").read_text(encoding="utf-8")
+    assert "function addonTable.HandleEditBoxTranslate" in fcl
+    assert "function _G.WoWChatTranslator_OnHotkey" in fcl
+    assert "OnEditBoxKeyDown" in fcl
+    assert "IsAltKeyDown()" in fcl
+    assert "HookChatEditBox" in fcl
+    assert "HookAllChatEditBoxes" in fcl
+    assert "CreateEditBoxTranslateButton" in fcl
+    assert "WoWChatTranslator_QuickBtn" in fcl
+
+
+def test_outgoing_slang_and_accent_stripping():
+    outgoing = (ADDON_DIR / "Core" / "Outgoing.lua").read_text(encoding="utf-8")
+    assert "StripAccents" in outgoing
+    assert "COLLOQUIAL_OUTGOING" in outgoing
+    assert '["sin mana"] = "oom"' in outgoing
+    assert '["no puleen"] = "dont pull"' in outgoing
+    assert '["mala mia"] = "mb"' in outgoing
+    assert '["esperen"] = "wait"' in outgoing
+

@@ -18,5 +18,5 @@
 **ForeverChatLogger** is the companion lightweight World of Warcraft Addon that maintains and debounces `/chatlog` to disk in real-time, enabling instantaneous offline translation via the **WoW Chat Translator** desktop overlay application.
 
 - **File:** `ForeverChatLogger-v2.0.0.zip`
-- **SHA-256:** `981490742bae219a9fb5213e4f3e2b40393e488a4250287e9e5901f1758e16ae`
-- **Size:** `1778.7 KB`
+- **SHA-256:** `7b18f78ca6d6897c3db8733bc2fe965473cfc27234f4ac2d6dfaa233e8dbb666`
+- **Size:** `1782.0 KB`

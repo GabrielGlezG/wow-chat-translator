@@ -137,5 +137,8 @@ UI\Config.lua
 Core\API.lua
 Core\Init.lua
 
+# Atajos de teclado nativos de WoW (Alt+T para traducir ES->EN en la caja de chat)
+Bindings.xml
+
 # Integración oficial de WoW Chat Translator & Flusher de /chatlog
 ForeverChatLogger.lua

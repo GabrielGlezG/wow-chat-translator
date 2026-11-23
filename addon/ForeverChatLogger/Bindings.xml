@@ -1,0 +1,7 @@
+<Bindings>
+    <Binding name="WOWCHATTRANSLATOR_HOTKEY" header="WOWCHATTRANSLATOR" default="ALT-T" runOnUp="false">
+        if WoWChatTranslator_OnHotkey then
+            WoWChatTranslator_OnHotkey()
+        end
+    </Binding>
+</Bindings>

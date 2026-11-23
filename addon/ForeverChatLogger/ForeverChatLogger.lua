@@ -154,8 +154,159 @@ local function EnsureChatLogging()
 end
 
 -- ==============================================================================
--- 3. COMANDOS /en y /ingles PARA RESPONDER EN INGLÉS GAMER
+-- 3. TRADUCCIÓN SALIENTE ES -> EN AL VUELO (Atajo Alt+T y comandos /en, /ingles)
 -- ==============================================================================
+local function GetActiveEditBox()
+    local editBox = nil
+    if ChatEdit_GetActiveWindow then
+        editBox = ChatEdit_GetActiveWindow()
+    end
+    if not editBox and ChatEdit_GetLastActiveWindow then
+        editBox = ChatEdit_GetLastActiveWindow()
+    end
+    if not editBox then
+        local numWindows = NUM_CHAT_WINDOWS or 10
+        for i = 1, numWindows do
+            local eb = _G["ChatFrame" .. i .. "EditBox"]
+            if eb and eb:IsVisible() and eb:HasFocus() then
+                return eb
+            end
+        end
+    end
+    if not editBox then
+        editBox = ChatFrame1EditBox or ChatFrameEditBox
+    end
+    return editBox
+end
+addonTable.GetActiveEditBox = GetActiveEditBox
+
+function addonTable.HandleEditBoxTranslate(editBox)
+    editBox = editBox or GetActiveEditBox()
+    if not editBox then return end
+
+    local text = editBox:GetText()
+    if not text or text == "" then return end
+
+    -- Preservar comandos de canal o susurro (/p, /ra, /w Pepe, /s, /y, /g, /1, etc.)
+    local prefix = ""
+    local body = text
+
+    local slashMatch = text:match("^(%s*/%w+%s+)(.*)$")
+    if slashMatch then
+        local cmd, rest = text:match("^(%s*/%w+%s+)(.*)$")
+        local cmdLower = cmd:lower()
+        if (cmdLower:find("^/w%s") or cmdLower:find("^/whisper%s") or cmdLower:find("^/tell%s")) then
+            local wCmd, target, wBody = text:match("^(%s*/%w+%s+)(%S+)%s+(.*)$")
+            if target and wBody then
+                prefix = wCmd .. target .. " "
+                body = wBody
+            else
+                prefix = cmd
+                body = rest
+            end
+        else
+            prefix = cmd
+            body = rest
+        end
+    end
+
+    if not body or body == "" then return end
+
+    local translated = body
+    if addonTable.TranslateOutgoing then
+        translated = addonTable.TranslateOutgoing(body)
+    end
+
+    if translated and translated ~= "" then
+        local newText = prefix .. translated
+        editBox:SetText(newText)
+        if editBox.SetCursorPosition then
+            editBox:SetCursorPosition(#newText)
+        end
+
+        -- Feedback sutil en pantalla y sonido UI
+        if UIErrorsFrame and UIErrorsFrame.AddMessage then
+            UIErrorsFrame:AddMessage("|cff00e5ff[WoW Chat Translator]|r EN: " .. translated, 0.0, 0.9, 1.0, 1.0, 2)
+        end
+        if PlaySound then
+            pcall(PlaySound, SOUNDKIT and SOUNDKIT.IG_CHAT_BOTTOM or 848)
+        end
+    end
+end
+
+-- Callback global para atajo configurado en Teclado de WoW (Bindings.xml)
+function _G.WoWChatTranslator_OnHotkey()
+    addonTable.HandleEditBoxTranslate()
+end
+
+local hookedEditBoxes = {}
+
+local function OnEditBoxKeyDown(self, key)
+    -- Detectar Alt+T (o alt+t) sin Ctrl ni Shift
+    if (key == "T" or key == "t") and IsAltKeyDown() and not IsControlKeyDown() and not IsShiftKeyDown() then
+        addonTable.HandleEditBoxTranslate(self)
+    end
+end
+
+local function HookChatEditBox(editBox)
+    if not editBox or hookedEditBoxes[editBox] then return end
+    hookedEditBoxes[editBox] = true
+    if editBox.HookScript then
+        editBox:HookScript("OnKeyDown", OnEditBoxKeyDown)
+    elseif editBox.SetScript then
+        local orig = editBox:GetScript("OnKeyDown")
+        editBox:SetScript("OnKeyDown", function(self, key, ...)
+            OnEditBoxKeyDown(self, key)
+            if orig then return orig(self, key, ...) end
+        end)
+    end
+end
+
+local function HookAllChatEditBoxes()
+    local numWindows = NUM_CHAT_WINDOWS or 10
+    for i = 1, numWindows do
+        local eb = _G["ChatFrame" .. i .. "EditBox"]
+        if eb then HookChatEditBox(eb) end
+    end
+    if ChatFrameEditBox then
+        HookChatEditBox(ChatFrameEditBox)
+    end
+end
+
+local function CreateEditBoxTranslateButton()
+    local parent = ChatFrame1EditBox or ChatFrameEditBox
+    if not parent or _G["WoWChatTranslator_QuickBtn"] then return end
+
+    local btn = CreateFrame("Button", "WoWChatTranslator_QuickBtn", parent)
+    btn:SetSize(44, 16)
+    btn:SetPoint("RIGHT", parent, "RIGHT", -4, 0)
+
+    local text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    text:SetPoint("CENTER", btn, "CENTER", 0, 0)
+    text:SetText("|cff00e5ff[Alt+T]|r")
+    btn.text = text
+
+    btn:SetScript("OnEnter", function(self)
+        self.text:SetText("|cffffff00[Alt+T]|r")
+        if GameTooltip then
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine("|cff00e5ffWoW Chat Translator|r (ES -> EN)")
+            GameTooltip:AddLine("Traducir texto actual al inglés gamer antes de enviar.", 1, 1, 1)
+            GameTooltip:AddLine("|cffFFD100Atajo rápido:|r Presiona |cff00ff00Alt+T|r mientras escribes en el chat.", 0.8, 0.8, 0.8)
+            GameTooltip:AddLine("O haz clic aquí para traducir en el acto.", 0.8, 0.8, 0.8)
+            GameTooltip:Show()
+        end
+    end)
+    btn:SetScript("OnLeave", function(self)
+        self.text:SetText("|cff00e5ff[Alt+T]|r")
+        if GameTooltip then GameTooltip:Hide() end
+    end)
+    btn:SetScript("OnClick", function()
+        local activeEb = GetActiveEditBox() or parent
+        addonTable.HandleEditBoxTranslate(activeEb)
+    end)
+end
+
 SLASH_WOWCHATTRANSLATOREN1 = "/en"
 SLASH_WOWCHATTRANSLATOREN2 = "/ingles"
 SlashCmdList["WOWCHATTRANSLATOREN"] = function(msg)
@@ -164,6 +315,7 @@ SlashCmdList["WOWCHATTRANSLATOREN"] = function(msg)
     if not msg or msg == "" then
         if chatFrame then
             chatFrame:AddMessage("|cff00e5ff[WoW Chat Translator]|r |cffFFD100Uso:|r /en <tu mensaje en español>")
+            chatFrame:AddMessage("O escribe directamente en el chat y presiona |cff00ff00Alt+T|r.")
             chatFrame:AddMessage("Ejemplo: |cfffff0c0/en esperen sanador sin mana no puleen todavia|r")
         end
         return
@@ -179,16 +331,7 @@ SlashCmdList["WOWCHATTRANSLATOREN"] = function(msg)
     end
 
     -- Colocar de forma segura en la caja de texto para que el usuario solo pulse Enter
-    local editBox = nil
-    if ChatEdit_GetActiveWindow then
-        editBox = ChatEdit_GetActiveWindow()
-    end
-    if not editBox and ChatEdit_GetLastActiveWindow then
-        editBox = ChatEdit_GetLastActiveWindow()
-    end
-    if not editBox then
-        editBox = ChatFrame1EditBox or ChatFrameEditBox
-    end
+    local editBox = GetActiveEditBox()
 
     if editBox then
         if ChatEdit_ActivateChat then
@@ -332,11 +475,21 @@ initFrame:SetScript("OnEvent", function(self, event)
     -- Crear o reconectar la pestaña integrada "Traductor"
     addonTable.EnsureTranslatorTab()
 
+    -- Enganchar cajas de texto de chat para el atajo Alt+T y botón [Alt+T]
+    HookAllChatEditBoxes()
+    CreateEditBoxTranslateButton()
+    if hooksecurefunc and ChatEdit_ActivateChat and not addonTable.chatEditHooked then
+        addonTable.chatEditHooked = true
+        hooksecurefunc("ChatEdit_ActivateChat", function(editBox)
+            HookChatEditBox(editBox)
+        end)
+    end
+
     if not announced and (event == "PLAYER_LOGIN" or event == "PLAYER_ENTERING_WORLD") then
         announced = true
         local chatFrame = SELECTED_CHAT_FRAME or DEFAULT_CHAT_FRAME or ChatFrame1
         if chatFrame then
-            chatFrame:AddMessage("|cff00e5ff[WoW Chat Translator]|r Pestaña |cff00ff00[Traductor]|r integrada en tu chat. Escribe |cffFFD100/translator tab|r o |cffFFD100/en <texto>|r.")
+            chatFrame:AddMessage("|cff00e5ff[WoW Chat Translator]|r Pestaña |cff00ff00[Traductor]|r activa. Escribe en español en el chat y presiona |cff00ff00Alt+T|r para traducir a inglés!")
         end
     end
 end)

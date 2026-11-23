@@ -16,6 +16,10 @@ addonTable = addonTable or WoWTranslatorNS -- clientes < 3.0 no pasan argumentos
 local L = {}
 addonTable.L = L
 
+-- WoW Keybindings labels
+_G["BINDING_HEADER_WOWCHATTRANSLATOR"] = "WoW Chat Translator"
+_G["BINDING_NAME_WOWCHATTRANSLATOR_HOTKEY"] = "Translate chat to English (Alt+T)"
+
 -- INGLÉS PREDETERMINADO (enUS / enGB)
 L["UI_TITLE"] = "WoW Translator Configuration"
 L["UI_ENABLE_TEXT"] = " Enable Real-time Translation"

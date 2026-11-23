@@ -8,6 +8,10 @@ local locale = GetLocale()
 if locale ~= "esES" and locale ~= "esMX" then return end
 local L = addonTable.L
 
+-- WoW Keybindings labels
+_G["BINDING_HEADER_WOWCHATTRANSLATOR"] = "WoW Chat Translator"
+_G["BINDING_NAME_WOWCHATTRANSLATOR_HOTKEY"] = "Traducir texto a inglés (Alt+T)"
+
 L["UI_TITLE"] = "Configuración de WoW Translator"
 L["UI_ENABLE_TEXT"] = " Activar Traducción en tiempo real"
 L["UI_COLOR_BTN"] = "Elegir Color"

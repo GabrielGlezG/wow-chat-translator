@@ -25,6 +25,146 @@ local table_sort = table.sort
 -- siempre continuación de un carácter UTF-8, así que entran en la clase.
 local WORD = "[%w'\128-\255]+"
 
+local function StripAccents(str)
+    if not str then return "" end
+    str = string_gsub(str, "á", "a")
+    str = string_gsub(str, "é", "e")
+    str = string_gsub(str, "í", "i")
+    str = string_gsub(str, "ó", "o")
+    str = string_gsub(str, "ú", "u")
+    str = string_gsub(str, "ü", "u")
+    str = string_gsub(str, "Á", "a")
+    str = string_gsub(str, "É", "e")
+    str = string_gsub(str, "Í", "i")
+    str = string_gsub(str, "Ó", "o")
+    str = string_gsub(str, "Ú", "u")
+    str = string_gsub(str, "Ü", "u")
+    return str
+end
+addonTable.StripAccents = StripAccents
+
+-- Frases y expresiones coloquiales de alto uso en el chat de WoW (Español -> Inglés gamer)
+local COLLOQUIAL_OUTGOING = {
+    -- Saludos y despedidas
+    ["hola a todos"] = "hi all",
+    ["hola grupo"] = "hi team",
+    ["hola raid"] = "hi raid",
+    ["hola"] = "hi",
+    ["buenas"] = "hello",
+    ["saludos"] = "greetings",
+    ["adios"] = "bye",
+    ["nos vemos"] = "cya",
+    ["buen trabajo"] = "gj",
+    ["bien jugado"] = "gg",
+    ["buena partida"] = "gg",
+    ["gracias a todos"] = "ty all",
+    ["muchas gracias"] = "tyvm",
+    ["gracias"] = "ty",
+    ["de nada"] = "yw",
+    ["no te preocupes"] = "np",
+    ["no pasa nada"] = "np",
+    ["sin problema"] = "np",
+    ["tranquilo"] = "np",
+    ["tranquilos"] = "np",
+    ["mala mia"] = "mb",
+    ["mi culpa"] = "my bad",
+    ["fue mi culpa"] = "my bad",
+    ["perdon a todos"] = "sry all",
+    ["perdon"] = "sry",
+    ["disculpen"] = "sry",
+    ["lo siento"] = "sry",
+
+    -- Estado y peticiones comunes
+    ["esperen por favor"] = "wait please",
+    ["esperen un segundo"] = "wait sec",
+    ["esperen un momento"] = "hold on",
+    ["esperen"] = "wait",
+    ["espera"] = "wait",
+    ["esperame"] = "wait for me",
+    ["sin mana"] = "oom",
+    ["no tengo mana"] = "oom",
+    ["bebiendo mana"] = "drinking mana",
+    ["bebiendo"] = "drinking",
+    ["comiendo"] = "eating",
+    ["listos"] = "rdy",
+    ["listo"] = "rdy",
+    ["preparados"] = "rdy",
+    ["todos listos"] = "all rdy",
+    ["quien falta"] = "who is missing",
+    ["ya vuelvo"] = "brb",
+    ["vuelvo enseguida"] = "brb",
+    ["ausente"] = "afk",
+    ["en camino"] = "omw",
+    ["voy de camino"] = "omw",
+    ["voy"] = "omw",
+
+    -- Combate y mecánicas
+    ["no puleen todavia"] = "dont pull yet",
+    ["no puleen"] = "dont pull",
+    ["no jalen todavia"] = "dont pull yet",
+    ["no jalen"] = "dont pull",
+    ["puleen"] = "pull",
+    ["jalen"] = "pull",
+    ["cuidado con el aggro"] = "watch aggro",
+    ["cuidado"] = "watch out",
+    ["atentos"] = "watch out",
+    ["sin aggro"] = "no aggro",
+    ["foco al jefe"] = "focus boss",
+    ["foco a los adds"] = "focus adds",
+    ["foco al caster"] = "focus caster",
+    ["ataquen al"] = "focus",
+    ["corten el casteo"] = "kick cast",
+    ["corten"] = "kick",
+    ["interrumpan"] = "interrupt",
+    ["limpien"] = "clean",
+    ["dispeleen"] = "dispel",
+    ["purguen"] = "purge",
+    ["corran"] = "run",
+    ["salgan del fuego"] = "out of fire",
+    ["salgan"] = "get out",
+    ["muerte total"] = "wipe",
+    ["wipeamos"] = "wipe",
+    ["nos morimos"] = "wipe",
+    ["resucitenme"] = "rez me pls",
+    ["resuciten"] = "rez pls",
+    ["dame rez"] = "rez pls",
+    ["necesito res"] = "need rez",
+    ["dame bufo"] = "buff pls",
+    ["dame buffs"] = "buffs pls",
+    ["bufos por favor"] = "buffs pls",
+
+    -- LFG, loot y hermandad
+    ["busco grupo para"] = "lfg",
+    ["busco grupo"] = "lfg",
+    ["busco party"] = "lfg",
+    ["busco mas"] = "lfm",
+    ["buscamos gente"] = "lfm",
+    ["invitame"] = "inv pls",
+    ["invita"] = "inv",
+    ["dame party"] = "inv pls",
+    ["dame lider"] = "lead pls",
+    ["puedo ir"] = "can i come",
+    ["hay lugar"] = "any spot",
+    ["donde esta"] = "where is",
+    ["alguien sabe"] = "anyone know",
+    ["alguien tiene"] = "anyone have",
+    ["lo necesito"] = "need",
+    ["lo quiero"] = "need",
+    ["puedo tirar need"] = "can i need",
+    ["puedo tirar codicia"] = "can i greed",
+    ["paso de este item"] = "pass",
+    ["paso"] = "pass",
+    ["alguien lo quiere"] = "anyone need this",
+    ["cuanto cuesta"] = "how much",
+    ["compro"] = "wtb",
+    ["vendo"] = "wts",
+    ["cambio"] = "wtt",
+    ["sanador"] = "healer",
+    ["curador"] = "healer",
+    ["tanque"] = "tank",
+}
+addonTable.COLLOQUIAL_OUTGOING = COLLOQUIAL_OUTGOING
+
 local ReverseDict = {}    -- traducción -> término original
 local ReverseByFirst = {} -- primera palabra -> { traducciones de varias palabras }
 local builtVersion        -- versión del diccionario con la que se construyó
@@ -63,8 +203,23 @@ local function Build()
         end
     end
 
-    for source, translation in pairs(MasterDict) do add(translation, source) end
-    for source, translation in pairs(MultiWordPatterns) do add(translation, source) end
+    for source, translation in pairs(MasterDict) do
+        add(translation, source)
+        local unacc = StripAccents(translation)
+        if unacc ~= translation then add(unacc, source) end
+    end
+    for source, translation in pairs(MultiWordPatterns) do
+        add(translation, source)
+        local unacc = StripAccents(translation)
+        if unacc ~= translation then add(unacc, source) end
+    end
+
+    -- Registrar frases coloquiales de alto uso
+    for phrase, enTerm in pairs(COLLOQUIAL_OUTGOING) do
+        add(phrase, enTerm)
+        local unacc = StripAccents(phrase)
+        if unacc ~= phrase then add(unacc, enTerm) end
+    end
 
     for _, bucket in pairs(ReverseByFirst) do
         table_sort(bucket, function(a, b) return #a > #b end)
@@ -103,7 +258,8 @@ function addonTable.TranslateOutgoing(text)
     end
 
     text = string_gsub(text, "(" .. WORD .. ")", function(word)
-        local source = ReverseDict[string_lower(word)]
+        local wLower = string_lower(word)
+        local source = ReverseDict[wLower] or ReverseDict[StripAccents(wLower)]
         if not source then return word end
         changed = true
         return source
