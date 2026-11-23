@@ -1,0 +1,184 @@
+local ADDON_NAME, addonTable = ...
+addonTable = addonTable or WoWTranslatorNS -- clientes < 3.0 no pasan argumentos
+
+-- ==========================================
+-- MOTOR DE TRADUCCIÓN (mensajes entrantes)
+-- ==========================================
+-- Anota: deja el término original y le añade la traducción entre paréntesis.
+-- Es el camino caliente del addon — corre por cada mensaje de chat y por cada
+-- tooltip del Buscador de grupos — así que evita todo lo que pueda evitar.
+
+-- Core/Dictionary.lua vacía y rellena estas tablas sin reasignarlas nunca, así
+-- que quedarse la referencia aquí es válido para toda la sesión.
+local MasterDict = addonTable.MasterDict
+local MultiWordPatterns = addonTable.MultiWordPatterns
+local MultiWordByFirst = addonTable.MultiWordByFirst
+local EntryColor = addonTable.EntryColor
+local NativeByFirst = addonTable.NativeByFirst
+
+local ipairs = ipairs
+local string_byte, string_find, string_format, string_gmatch = string.byte, string.find, string.format, string.gmatch
+local string_gsub, string_lower, string_match, string_rep, string_sub =
+    string.gsub, string.lower, string.match, string.rep, string.sub
+local table_concat = table.concat
+
+-- "icc hc" -> "[Ii][Cc][Cc] [Hh][Cc]", para casar sin importar mayúsculas sin
+-- tener que minusculizar el texto que se va a devolver. Los signos van escapados
+-- ("m+"), y si la frase acaba en signo no se exige frontera al final: tras el "+"
+-- de "m+" ya no hay letra que separar.
+local function CaseInsensitivePattern(phrase)
+    local body = string_gsub(phrase, "%p", "%%%0")
+    body = string_gsub(body, "%a",
+        function(c) return string_format("[%s%s]", string_lower(c), c:upper()) end)
+    return "%f[%w]" .. body .. (string_find(phrase, "%w$") and "%f[%W]" or "")
+end
+
+-- Aparta un trozo tras una marca sin letras ("\1\2\2\1") para que ningún paso lo
+-- traduzca; Restore lo devuelve a su sitio.
+local function Stash(saved, piece)
+    saved[#saved + 1] = piece
+    return "\1" .. string_rep("\2", #saved) .. "\1"
+end
+
+local function Restore(text, saved)
+    return (string_gsub(text, "\1(\2+)\1", function(marks) return saved[#marks] end))
+end
+
+-- Enlaces de objeto, misión, etc., con su color si lo llevan: "|cffRRGGBB" o el
+-- de calidad de retail y Forever, "|cnIQ1:".
+local function HideLinks(text, saved)
+    local function hide(link) return Stash(saved, link) end
+    text = string_gsub(text, "|c[^|]*|H.-|h.-|h|r", hide)
+    return (string_gsub(text, "|H.-|h.-|h", hide))
+end
+
+-- Byte que no es parte de un carácter no ASCII (o fuera del texto).
+local function IsBoundary(text, pos)
+    local b = string_byte(text, pos)
+    return not b or b < 128
+end
+
+-- Jerga en coreano o chino (Data/Origen/). Recorre el texto carácter a carácter
+-- y en cada uno prueba los términos que empiezan por él, el más largo primero.
+-- Lo ya anotado (|c...|r) y los enlaces (|H...|h...|h) se copian sin mirar: ni
+-- se traduce una traducción ni se rompe un enlace de objeto.
+local function TranslateNative(text, userColor)
+    local out, n, i, len = {}, 0, 1, #text
+    local changed = false
+    while i <= len do
+        local b = string_byte(text, i)
+        local stop, piece = i, nil
+        if b == 124 then -- "|"
+            local nextChar = string_sub(text, i + 1, i + 1)
+            local _, e
+            if nextChar == "c" then
+                _, e = string_find(text, "|r", i + 2, true)
+            elseif nextChar == "H" then
+                _, e = string_find(text, "|h.-|h", i + 2)
+            end
+            stop = e or i
+        elseif b >= 192 then
+            local char = string_match(text, "^[\192-\255][\128-\191]*", i)
+            stop = i + #char - 1
+            local bucket = NativeByFirst[char]
+            if bucket then
+                for _, entry in ipairs(bucket) do
+                    local last = i + #entry.term - 1
+                    if string_sub(text, i, last) == entry.term
+                        and (not entry.single or (IsBoundary(text, i - 1) and IsBoundary(text, last + 1))) then
+                        piece = entry.term .. "(|cff" .. userColor .. entry.translation .. "|r)"
+                        stop = last
+                        changed = true
+                        break
+                    end
+                end
+            end
+        end
+        n = n + 1
+        out[n] = piece or string_sub(text, i, stop)
+        i = stop + 1
+    end
+    if not changed then return text, false end
+    return table_concat(out), true
+end
+
+_G.TranslateChat = function(text)
+    if not text or not WoWTranslatorDB or not WoWTranslatorDB.enabled then return text, false end
+    -- En retail 12 y Forever el chat llega secreto dentro de instancias: no se
+    -- puede leer, así que se deja pasar tal cual.
+    if issecretvalue and issecretvalue(text) then return text, false end
+
+    local changed = false
+    local userColor = WoWTranslatorDB.chatColor or "00ff00"
+    -- Frase completa (Core/Templates.lua): se calcula sobre el original, antes
+    -- de anotar, y va debajo del mensaje.
+    local settings = WoWTranslatorDB.settings
+    local sentence = settings.templates and settings.srcEnUS and addonTable.TemplateSentence(text)
+
+    -- Casilla "Inglés" de la vista General: sin ella solo queda la jerga de
+    -- Data/Origen/. MasterDict sigue lleno porque /wt en y Origen lo necesitan.
+    if settings.srcEnUS then
+    -- 1. FRASES MULTI-PALABRA
+    -- Se recorren las palabras del mensaje y solo se prueban las frases cuya
+    -- primera palabra aparece en él. gmatch fija la cadena original al empezar,
+    -- así que reasignar textLower dentro del bucle no altera la iteración.
+    -- Cada frase traducida se aparta y vuelve al final: así ni otra frase ni el
+    -- paso de palabras sueltas la anotan otra vez ("Ruins" dentro de "Ruins of
+    -- Lordaeron"). Los enlaces se apartan desde el principio: su nombre no es
+    -- chat ("los" en "Gran hacha de los Renegados").
+    local seen, done = {}, {}
+    text = HideLinks(text, done)
+    local textLower = string_lower(text)
+    for word in string_gmatch(textLower, "[%w']+") do
+        local bucket = MultiWordByFirst[word]
+        if bucket and not seen[word] then
+            seen[word] = true -- una palabra repetida traduciría dos veces la misma frase
+            for _, phrase in ipairs(bucket) do
+                if string_find(textLower, phrase, 1, true) then
+                    local prefix = "(|cff" .. (EntryColor[phrase] or userColor)
+                    local replaced
+                    text, replaced = string_gsub(text, CaseInsensitivePattern(phrase), function(found)
+                        return Stash(done, found .. prefix .. MultiWordPatterns[phrase] .. "|r)")
+                    end)
+                    if replaced > 0 then
+                        changed = true
+                        textLower = string_lower(text)
+                    end
+                end
+            end
+        end
+    end
+
+    -- 2. PALABRAS SUELTAS
+    -- Una palabra pegada a un punto por los dos lados del punto es parte de una
+    -- dirección (discord.gg, gg.com): ahí "gg" no es "bien jugado".
+    text = string_gsub(text, "()([%a%d']+)()", function(s, word, e)
+        if (s > 2 and string_find(text, "^%w%.", s - 2)) or string_find(text, "^%.%w", e) then return word end
+        local translation = MasterDict[string_lower(word)]
+        if not translation then return word end
+        changed = true
+        return word .. "(|cff" .. (EntryColor[string_lower(word)] or userColor) .. translation .. "|r)"
+    end)
+    text = Restore(text, done)
+    end
+
+    -- 3. JERGA EN OTROS IDIOMAS: solo si hay alguno activado y el mensaje trae
+    -- algo que no sea ASCII, para que el chat en inglés no pague nada.
+    if addonTable.hasNative and string_find(text, "[\192-\255]") then
+        local nativeChanged
+        text, nativeChanged = TranslateNative(text, userColor)
+        changed = changed or nativeChanged
+    end
+
+    if sentence then
+        text = text .. "\n|cff" .. userColor .. "» " .. sentence .. "|r"
+        changed = true
+    end
+
+    return text, changed
+end
+
+-- La usa también Core/Outgoing.lua para el sentido contrario.
+addonTable.CaseInsensitivePattern = CaseInsensitivePattern
+addonTable.HideLinks = HideLinks
+addonTable.RestoreLinks = Restore

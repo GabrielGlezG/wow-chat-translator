@@ -1,0 +1,105 @@
+local ADDON_NAME, addonTable = ...
+addonTable = addonTable or WoWTranslatorNS -- clientes < 3.0 no pasan argumentos
+local L = addonTable.L
+
+-- ==========================================
+-- ARRANQUE
+-- ==========================================
+-- Único fichero que sabe en qué orden se monta todo. Carga el último.
+
+local DEFAULT_SETTINGS = {
+    showMazz = true,
+    showInstClassic = true,
+    showInstTBC = true,
+    showInstWotLK = true,
+    showInstCata = true,
+    showInstMoP = true,
+    showInstWoD = true,
+    showInstLegion = true,
+    showInstBfA = true,
+    showInstShadowlands = true,
+    showInstDragonflight = true,
+    showInstTheWarWithin = true,
+    showInstMidnight = true,
+    showInstForever = true,
+    showSocial = true,
+    showClases = true,
+    showCombate = true,
+    showComercio = true,
+    showStats = true,
+    showGrupos = true,
+    showHermandad = true,
+    showProfesiones = true,
+    showRoles = true,
+    showEstado = true,
+    showZones = true,
+    showSets = true,
+    showRaces = true,
+    -- Jerga en otros idiomas (Data/Origen/): apagada hasta que el jugador la pida.
+    srcEnUS = true, -- el diccionario principal: la jerga en inglés
+    templates = true, -- frase completa debajo del mensaje (Core/Templates.lua)
+    srcKoKR = false,
+    srcZhCN = false,
+}
+
+-- Idioma al que se traduce en una instalación limpia. Antes era siempre esES, lo
+-- que dejaba a un alemán con la interfaz en alemán y el chat traducido al
+-- español hasta que abriera el panel. Data/ tiene columna para los 12 valores
+-- que devuelve GetLocale(); la única excepción es enGB, que comparte la de enUS.
+local function DefaultTargetLocale()
+    local locale = GetLocale()
+    if locale == "enGB" then return "enUS" end
+    return locale
+end
+
+-- Rellena lo que falte sin pisar lo que el jugador ya tenga elegido. Sirve tanto
+-- para una instalación limpia como para actualizar desde una versión anterior:
+-- un ajuste nuevo aparece activado y los viejos se respetan.
+local function PrepareDatabase()
+    WoWTranslatorDB = WoWTranslatorDB or {}
+    local db = WoWTranslatorDB
+
+    if db.enabled == nil then db.enabled = true end
+    db.targetLocale = db.targetLocale or DefaultTargetLocale()
+    db.chatColor = db.chatColor or "00ff00"
+    db.ignored = db.ignored or {}
+    db.settings = db.settings or {}
+    db.settings.channels = db.settings.channels or {}
+
+    for key, value in pairs(DEFAULT_SETTINGS) do
+        if db.settings[key] == nil then db.settings[key] = value end
+    end
+
+    for _, event in ipairs(addonTable.ChatEvents) do
+        if db.settings.channels[event] == nil then db.settings.channels[event] = true end
+    end
+end
+
+-- Botón "Valores por defecto" de UI/General.lua. Vacía la base de datos y deja
+-- que PrepareDatabase la rellene, para que "por defecto" esté definido en un
+-- solo sitio y no pueda desincronizarse de la instalación limpia.
+function addonTable.ResetDatabase()
+    -- Se conserva la posición del botón de minimapa: no es un ajuste de
+    -- traducción y mover el icono de sitio sorprende sin aportar nada.
+    local minimap = WoWTranslatorDB and WoWTranslatorDB.minimap
+    WoWTranslatorDB = { minimap = minimap }
+    PrepareDatabase()
+end
+
+local loader = CreateFrame("Frame")
+loader:RegisterEvent("PLAYER_LOGIN")
+loader:SetScript("OnEvent", function()
+    PrepareDatabase()
+
+    addonTable.LoadBabbleSources()
+    addonTable.RebuildMasterDict()
+
+    -- Lo esencial primero: si un cliente antiguo de servidor privado rechaza
+    -- algo de la interfaz, el chat se sigue traduciendo y /wt sigue funcionando.
+    addonTable.InstallChatFilter()
+    addonTable.RegisterSlashCommands()
+    addonTable.CreateMinimapButton()
+    addonTable.CreateConfigUI()
+
+    addonTable.Print(L["CHAT_LOADED"] or "Loaded.")
+end)

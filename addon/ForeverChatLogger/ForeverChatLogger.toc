@@ -1,18 +1,141 @@
-## Interface: 16001, 30300
+## Interface: 16001, 30300, 30400, 110000, 120000
 ## Title: |cff00e5ffWoW Chat Translator|r (ForeverChatLogger)
 ## Title-esES: |cff00e5ffWoW Chat Translator|r (ForeverChatLogger)
+## Title-esMX: |cff00e5ffWoW Chat Translator|r (ForeverChatLogger)
 ## Title-enUS: |cff00e5ffWoW Chat Translator|r (ForeverChatLogger)
-## Notes: Traducción de chat en tiempo real 100% in-game (Inglés <-> Español) y vaciado de /chatlog.
-## Notes-esES: Traducción de chat en tiempo real 100% in-game (Inglés <-> Español) y vaciado de /chatlog.
-## Notes-enUS: Real-time in-game chat translator (English <-> Spanish) and /chatlog flusher.
-## Author: Gabriel
-## Version: 1.1.0
+## Notes: Traducción de chat en tiempo real 100% in-game (Inglés <-> Español), plantillas de oraciones, jerga gamer y vaciado de /chatlog.
+## Notes-esES: Traducción de chat en tiempo real 100% in-game (Inglés <-> Español), plantillas de oraciones, jerga gamer y vaciado de /chatlog.
+## Notes-enUS: Real-time in-game chat translator (English <-> Spanish), sentence templates, gamer slang, and /chatlog flusher.
+## Author: Gabriel (Motor y diccionarios por Pirson)
+## Version: 2.0.0
+## Category: Chat
 ## X-Category: Chat & Communication
 ## X-Website: https://github.com/GabrielGlezG/wow-chat-translator
-## SavedVariables: ForeverChatLoggerDB
+## X-License: MIT
+## SavedVariables: WoWTranslatorDB, ForeverChatLoggerDB
+## OptionalDeps: LibStub, CallbackHandler, LibDataBroker-1.1, LibDBIcon-1.0
 
-Data\SlangData.lua
-Data\PhrasesData.lua
-Data\DictionaryData.lua
-Engine\TranslatorEngine.lua
+# Compatibilidad con clientes antiguos (va antes que Libs: CallbackHandler-1.0
+# se guarda securecallfunction al cargarse)
+Core\Compat.lua
+
+Libs\LibStub\LibStub.lua
+Libs\LibBabble-3.0\LibBabble-3.0.lua
+Libs\LibBabble-SubZone-3.0\LibBabble-SubZone-3.0.lua
+Libs\LibBabble-SubZone-3.0\LibBabble-SubZone-3.0_esES.lua
+Libs\LibBabble-SubZone-3.0\LibBabble-SubZone-3.0_esMX.lua
+Libs\LibBabble-SubZone-3.0\LibBabble-SubZone-3.0_deDE.lua
+Libs\LibBabble-SubZone-3.0\LibBabble-SubZone-3.0_frFR.lua
+Libs\LibBabble-SubZone-3.0\LibBabble-SubZone-3.0_itIT.lua
+Libs\LibBabble-SubZone-3.0\LibBabble-SubZone-3.0_koKR.lua
+Libs\LibBabble-SubZone-3.0\LibBabble-SubZone-3.0_ptBR.lua
+Libs\LibBabble-SubZone-3.0\LibBabble-SubZone-3.0_ruRU.lua
+Libs\LibBabble-SubZone-3.0\LibBabble-SubZone-3.0_zhCN.lua
+Libs\LibBabble-SubZone-3.0\LibBabble-SubZone-3.0_zhTW.lua
+Libs\LibBabble-Race-3.0\LibBabble-Race-3.0.lua
+Libs\LibBabble-ItemSet-3.0\LibBabble-ItemSet-3.0.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
+
+# Utilidades comunes
+Core\Util.lua
+
+# Idiomas (enUS define todas las claves; el resto sobrescribe)
+Locales\enUS.lua
+Locales\esES.lua
+Locales\deDE.lua
+Locales\frFR.lua
+Locales\itIT.lua
+Locales\ptBR.lua
+Locales\ruRU.lua
+Locales\koKR.lua
+Locales\zhCN.lua
+Locales\zhTW.lua
+Locales\plPL.lua
+Locales\svSE.lua
+Locales\noNO.lua
+Locales\trTR.lua
+Locales\jaJP.lua
+Locales\arSA.lua
+Locales\hiIN.lua
+Locales\thTH.lua
+Locales\viVN.lua
+Locales\csCZ.lua
+
+# Diccionarios
+Data\Clases.lua
+Data\Combate.lua
+Data\Comercio.lua
+Data\Estadisticas.lua
+Data\Estado.lua
+Data\Grupos.lua
+Data\Hermandad.lua
+Data\Instancias\Core.lua
+Data\Instancias\Classic.lua
+Data\Instancias\TBC.lua
+Data\Instancias\WotLK.lua
+Data\Instancias\Cata.lua
+Data\Instancias\MoP.lua
+Data\Instancias\WoD.lua
+Data\Instancias\Legion.lua
+Data\Instancias\BfA.lua
+Data\Instancias\Shadowlands.lua
+Data\Instancias\Dragonflight.lua
+Data\Instancias\TheWarWithin.lua
+Data\Instancias\Midnight.lua
+Data\Instancias\Forever.lua
+Data\Profesiones.lua
+Data\Roles.lua
+Data\Social.lua
+Data\Origen\koKR.lua
+Data\Origen\zhCN.lua
+Data\Plantillas\Lexico.lua
+Data\Plantillas\enUS.lua
+Data\Plantillas\esES.lua
+Data\Plantillas\deDE.lua
+Data\Plantillas\frFR.lua
+Data\Plantillas\itIT.lua
+Data\Plantillas\ptBR.lua
+Data\Plantillas\ruRU.lua
+Data\Plantillas\koKR.lua
+Data\Plantillas\zhCN.lua
+Data\Plantillas\zhTW.lua
+Data\Plantillas\plPL.lua
+Data\Plantillas\svSE.lua
+Data\Plantillas\noNO.lua
+Data\Plantillas\trTR.lua
+Data\Plantillas\jaJP.lua
+Data\Plantillas\arSA.lua
+Data\Plantillas\hiIN.lua
+Data\Plantillas\thTH.lua
+Data\Plantillas\viVN.lua
+Data\Plantillas\csCZ.lua
+
+# Motor
+Core\Dictionary.lua
+Core\Templates.lua
+Core\Translator.lua
+Core\Outgoing.lua
+
+# Modulos
+Modules\ChatFilter.lua
+Modules\MinimapButton.lua
+Modules\SlashCommands.lua
+
+# Interfaz
+UI\Widgets.lua
+UI\About.lua
+UI\General.lua
+UI\Categories.lua
+UI\Channels.lua
+UI\IgnoreList.lua
+UI\Help.lua
+UI\Config.lua
+
+# Arranque (debe ir el ultimo)
+Core\API.lua
+Core\Init.lua
+
+# Integración oficial de WoW Chat Translator & Flusher de /chatlog
 ForeverChatLogger.lua
