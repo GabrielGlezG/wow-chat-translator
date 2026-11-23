@@ -6,11 +6,32 @@
 ]]
 
 ForeverChatLoggerDB = ForeverChatLoggerDB or {}
-ForeverChatLoggerDB.lastLoaded = date()
-ForeverChatLoggerDB.loadCount = (ForeverChatLoggerDB.loadCount or 0) + 1
-ForeverChatLoggerDB.flushCount = ForeverChatLoggerDB.flushCount or 0
 if ForeverChatLoggerDB.inlineEnabled == nil then
     ForeverChatLoggerDB.inlineEnabled = true
+end
+
+-- Lista exhaustiva de canales de chat relevantes
+local CHAT_EVENTS = {
+    "CHAT_MSG_SAY",
+    "CHAT_MSG_YELL",
+    "CHAT_MSG_WHISPER",
+    "CHAT_MSG_PARTY",
+    "CHAT_MSG_PARTY_LEADER",
+    "CHAT_MSG_RAID",
+    "CHAT_MSG_RAID_LEADER",
+    "CHAT_MSG_RAID_WARNING",
+    "CHAT_MSG_INSTANCE_CHAT",
+    "CHAT_MSG_INSTANCE_CHAT_LEADER",
+    "CHAT_MSG_GUILD",
+    "CHAT_MSG_OFFICER",
+}
+
+-- Función para verificar si la traducción inline está activa
+local function IsInlineEnabled()
+    if ForeverChatLoggerDB and ForeverChatLoggerDB.inlineEnabled == false then
+        return false
+    end
+    return true
 end
 
 local function EnsureChatLogging()
@@ -19,26 +40,11 @@ local function EnsureChatLogging()
     end
 end
 
-local frame = CreateFrame("Frame")
-frame:RegisterEvent("PLAYER_LOGIN")
-frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-frame:RegisterEvent("CHAT_MSG_PARTY")
-frame:RegisterEvent("CHAT_MSG_PARTY_LEADER")
-frame:RegisterEvent("CHAT_MSG_RAID")
-frame:RegisterEvent("CHAT_MSG_RAID_LEADER")
-frame:RegisterEvent("CHAT_MSG_RAID_WARNING")
-frame:RegisterEvent("CHAT_MSG_WHISPER")
-frame:RegisterEvent("CHAT_MSG_GUILD")
-frame:RegisterEvent("CHAT_MSG_OFFICER")
-frame:RegisterEvent("CHAT_MSG_SAY")
-frame:RegisterEvent("CHAT_MSG_YELL")
-
 -- Detector de texto que ya está en español o no requiere traducción
 local function IsAlreadySpanishOrIgnored(text)
     if not text or text == "" then return true end
     local lower = " " .. text:lower() .. " "
-    
+
     -- Saludos o palabras inconfundibles de español
     if lower:find(" hola ") or lower:find(" wenas ") or lower:find(" buenas ") or
        lower:find(" gracias ") or lower:find(" terminamos ") or lower:find(" jaja") or
@@ -56,7 +62,49 @@ local function IsAlreadySpanishOrIgnored(text)
     return false
 end
 
--- Vaciado suave (debounced) de /chatlog a disco
+-- ==============================================================================
+-- FILTRADO E INYECCIÓN DE TRADUCCIÓN IN-GAME (ChatFrame_AddMessageEventFilter)
+-- ==============================================================================
+local useFilterAPI = false
+
+local function ChatTranslationFilter(self, event, msg, sender, ...)
+    if not IsInlineEnabled() then
+        return false, msg, sender, ...
+    end
+    if not msg or msg == "" then
+        return false, msg, sender, ...
+    end
+
+    -- Ignorar si ya está en español
+    if IsAlreadySpanishOrIgnored(msg) then
+        return false, msg, sender, ...
+    end
+
+    if WoWChatTranslatorEngine and WoWChatTranslatorEngine.TranslateEnToEs then
+        local ok, translation = pcall(WoWChatTranslatorEngine.TranslateEnToEs, msg)
+        if ok and translation and translation ~= "" then
+            -- Adjuntar subtítulo limpio en cyan/dorado directamente bajo el mensaje
+            local decorated = msg .. "\n|cff00e5ff  └── [ES] |r|cfffff0c0" .. translation .. "|r"
+            return false, decorated, sender, ...
+        end
+    end
+
+    return false, msg, sender, ...
+end
+
+-- Intentar registrar mediante la API estándar de Blizzard
+if ChatFrame_AddMessageEventFilter then
+    for _, evt in ipairs(CHAT_EVENTS) do
+        local ok = pcall(ChatFrame_AddMessageEventFilter, evt, ChatTranslationFilter)
+        if ok then
+            useFilterAPI = true
+        end
+    end
+end
+
+-- ==============================================================================
+-- VACIADO DE CHATLOG A DISCO (Debounced 0.20s)
+-- ==============================================================================
 local isFlushing = false
 local flushStep = 0
 local timerFrame = CreateFrame("Frame")
@@ -93,35 +141,59 @@ local function FlushLogToDisk()
     end
 end
 
--- Procesa e inyecta la traducción en el chat nativo de WoW
-local function HandleIncomingChatMessage(msg, sender)
-    if not ForeverChatLoggerDB.inlineEnabled then return end
+-- Fallback para clientes que no soportan ChatFrame_AddMessageEventFilter
+local function HandleIncomingChatMessageFallback(msg, sender)
+    if not IsInlineEnabled() then return end
     if not msg or msg == "" then return end
-
-    -- Ignorar mensajes propios
-    local myName = UnitName("player")
-    if sender and myName and (sender == myName or sender:find("^" .. myName)) then
-        return
-    end
-
     if IsAlreadySpanishOrIgnored(msg) then return end
 
     if WoWChatTranslatorEngine and WoWChatTranslatorEngine.TranslateEnToEs then
-        local translation = WoWChatTranslatorEngine.TranslateEnToEs(msg)
-        if translation and translation ~= "" and DEFAULT_CHAT_FRAME then
-            DEFAULT_CHAT_FRAME:AddMessage("|cff00e5ff  └── [ES] |r|cfffff0c0" .. translation .. "|r")
+        local ok, translation = pcall(WoWChatTranslatorEngine.TranslateEnToEs, msg)
+        if ok and translation and translation ~= "" then
+            local chatFrame = SELECTED_CHAT_FRAME or DEFAULT_CHAT_FRAME
+            if chatFrame then
+                chatFrame:AddMessage("|cff00e5ff  └── [ES] |r|cfffff0c0" .. translation .. "|r")
+            end
         end
     end
 end
 
+-- ==============================================================================
+-- EVENT FRAME PRINCIPAL
+-- ==============================================================================
+local frame = CreateFrame("Frame")
+frame:RegisterEvent("ADDON_LOADED")
+frame:RegisterEvent("PLAYER_LOGIN")
+frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+
+-- Registrar eventos de chat para vaciado a disco (y fallback de traducción si no hay filter API)
+for _, evt in ipairs(CHAT_EVENTS) do
+    frame:RegisterEvent(evt)
+end
+
 local hasAnnounced = false
 frame:SetScript("OnEvent", function(self, event, ...)
+    if event == "ADDON_LOADED" then
+        local addon = ...
+        if addon == "ForeverChatLogger" then
+            ForeverChatLoggerDB = ForeverChatLoggerDB or {}
+            if ForeverChatLoggerDB.inlineEnabled == nil then
+                ForeverChatLoggerDB.inlineEnabled = true
+            end
+            ForeverChatLoggerDB.loadCount = (ForeverChatLoggerDB.loadCount or 0) + 1
+            ForeverChatLoggerDB.lastLoaded = date()
+        end
+        return
+    end
+
     if event == "PLAYER_LOGIN" or event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
         EnsureChatLogging()
         if (event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_LOGIN") and not hasAnnounced then
             hasAnnounced = true
-            if DEFAULT_CHAT_FRAME then
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00e5ff[WoW Chat Translator]|r Addon activo. Traducción en chat: |cff00ff00ACTIVADA|r. Escribe |cffFFD100/translator|r o |cffFFD100/en <texto>|r.")
+            local targetFrame = SELECTED_CHAT_FRAME or DEFAULT_CHAT_FRAME
+            if targetFrame then
+                targetFrame:AddMessage("|cff00e5ff[WoW Chat Translator]|r Addon activo. Traducción en chat: |cff00ff00ACTIVADA|r. Escribe |cffFFD100/translator test|r o |cffFFD100/en <texto>|r.")
             end
         end
         return
@@ -130,94 +202,137 @@ frame:SetScript("OnEvent", function(self, event, ...)
     -- Eventos de chat entrantes
     if event:sub(1, 9) == "CHAT_MSG_" then
         local msg, sender = ...
-        HandleIncomingChatMessage(msg, sender)
+        if not useFilterAPI then
+            HandleIncomingChatMessageFallback(msg, sender)
+        end
         FlushLogToDisk()
     end
 end)
 
--- Comandos /translator y /fcl
+-- ==============================================================================
+-- COMANDOS SLASH: /translator y /fcl
+-- ==============================================================================
 SLASH_WOWCHATTRANSLATOR1 = "/translator"
 SLASH_WOWCHATTRANSLATOR2 = "/fcl"
 SlashCmdList["WOWCHATTRANSLATOR"] = function(msg)
     local cmd, arg = (msg or ""):match("^%s*(%S+)%s*(.-)%s*$")
     cmd = (cmd or ""):lower()
+    local chatFrame = SELECTED_CHAT_FRAME or DEFAULT_CHAT_FRAME or ChatFrame1
 
     if cmd == "test" then
-        DEFAULT_CHAT_FRAME:AddMessage("|cff00e5ff=== Demostración de Traducción In-Game ===|r")
+        chatFrame:AddMessage("|cff00e5ff=== Demostración de Traducción In-Game ===|r")
         local testCases = {
             "wait sec, healer oom, dont pull yet",
             "can someone tell me where the exit is?",
             "my computer is having issues and restarting",
-            "why did you pull that dragon when the healer was eating?",
+            "watch out for tail swipe",
             "anyone need this item or can i greed?"
         }
         for _, orig in ipairs(testCases) do
-            local tr = WoWChatTranslatorEngine.TranslateEnToEs(orig)
-            DEFAULT_CHAT_FRAME:AddMessage("|cffA8C8FF[Inglés]:|r " .. orig)
-            DEFAULT_CHAT_FRAME:AddMessage("|cff00e5ff  └── [ES]:|r |cfffff0c0" .. (tr or orig) .. "|r")
+            local tr = nil
+            if WoWChatTranslatorEngine and WoWChatTranslatorEngine.TranslateEnToEs then
+                local ok, res = pcall(WoWChatTranslatorEngine.TranslateEnToEs, orig)
+                if ok then tr = res end
+            end
+            chatFrame:AddMessage("|cffA8C8FF[Inglés]:|r " .. orig)
+            chatFrame:AddMessage("|cff00e5ff  └── [ES]:|r |cfffff0c0" .. (tr or orig) .. "|r")
         end
 
     elseif cmd == "inline" then
         local sub = (arg or ""):lower()
         if sub == "on" then
             ForeverChatLoggerDB.inlineEnabled = true
-            DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[WoW Chat Translator]|r Subtítulos de traducción en el chat: ENCENDIDOS.")
+            chatFrame:AddMessage("|cff00ff00[WoW Chat Translator]|r Subtítulos de traducción en el chat: ENCENDIDOS.")
         elseif sub == "off" then
             ForeverChatLoggerDB.inlineEnabled = false
-            DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[WoW Chat Translator]|r Subtítulos de traducción en el chat: APAGADOS.")
+            chatFrame:AddMessage("|cffff0000[WoW Chat Translator]|r Subtítulos de traducción en el chat: APAGADOS.")
         else
-            ForeverChatLoggerDB.inlineEnabled = not ForeverChatLoggerDB.inlineEnabled
-            local st = ForeverChatLoggerDB.inlineEnabled and "|cff00ff00ENCENDIDOS|r" or "|cffff0000APAGADOS|r"
-            DEFAULT_CHAT_FRAME:AddMessage("|cff00e5ff[WoW Chat Translator]|r Subtítulos de traducción: " .. st)
+            ForeverChatLoggerDB.inlineEnabled = not IsInlineEnabled()
+            local st = IsInlineEnabled() and "|cff00ff00ENCENDIDOS|r" or "|cffff0000APAGADOS|r"
+            chatFrame:AddMessage("|cff00e5ff[WoW Chat Translator]|r Subtítulos de traducción: " .. st)
         end
 
     elseif cmd == "flush" then
         FlushLogToDisk()
-        DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[WoW Chat Translator]|r Vaciado manual de chat log completado.")
+        chatFrame:AddMessage("|cff00ff00[WoW Chat Translator]|r Vaciado manual de chat log completado.")
 
     elseif cmd == "on" then
         LoggingChat(true)
-        DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[WoW Chat Translator]|r /chatlog forzado a ENCENDIDO.")
+        chatFrame:AddMessage("|cff00ff00[WoW Chat Translator]|r /chatlog forzado a ENCENDIDO.")
 
     elseif cmd == "off" then
         LoggingChat(false)
-        DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[WoW Chat Translator]|r /chatlog APAGADO.")
+        chatFrame:AddMessage("|cffff0000[WoW Chat Translator]|r /chatlog APAGADO.")
 
     else
         local statusColor = LoggingChat() and "|cff00ff00ACTIVO|r" or "|cffff0000INACTIVO|r"
-        local inlineColor = ForeverChatLoggerDB.inlineEnabled and "|cff00ff00ACTIVO|r" or "|cffff0000INACTIVO|r"
-        DEFAULT_CHAT_FRAME:AddMessage("|cff00e5ff=== WoW Chat Translator v1.1.0 ===|r")
-        DEFAULT_CHAT_FRAME:AddMessage(" Traductor en chat (Subtítulos): " .. inlineColor)
-        DEFAULT_CHAT_FRAME:AddMessage(" Logger a disco (/chatlog): " .. statusColor .. " | Vaciados: " .. (ForeverChatLoggerDB.flushCount or 0))
-        DEFAULT_CHAT_FRAME:AddMessage(" Comandos disponibles:")
-        DEFAULT_CHAT_FRAME:AddMessage("   |cffFFD100/translator test|r - Prueba de traducción en vivo en el chat")
-        DEFAULT_CHAT_FRAME:AddMessage("   |cffFFD100/translator inline on/off|r - Enciende o apaga el subtítulo en el chat")
-        DEFAULT_CHAT_FRAME:AddMessage("   |cffFFD100/en <texto>|r o |cffFFD100/ingles <texto>|r - Traduce de español a inglés para responder")
-        DEFAULT_CHAT_FRAME:AddMessage("   |cffFFD100/translator flush|r - Fuerza vaciado a disco")
+        local inlineColor = IsInlineEnabled() and "|cff00ff00ACTIVO|r" or "|cffff0000INACTIVO|r"
+        chatFrame:AddMessage("|cff00e5ff=== WoW Chat Translator v1.1.0 ===|r")
+        chatFrame:AddMessage(" Traductor en chat (Subtítulos): " .. inlineColor)
+        chatFrame:AddMessage(" Logger a disco (/chatlog): " .. statusColor .. " | Vaciados: " .. (ForeverChatLoggerDB.flushCount or 0))
+        chatFrame:AddMessage(" Comandos disponibles:")
+        chatFrame:AddMessage("   |cffFFD100/translator test|r - Prueba de traducción en vivo en el chat")
+        chatFrame:AddMessage("   |cffFFD100/translator inline on/off|r - Enciende o apaga el subtítulo en el chat")
+        chatFrame:AddMessage("   |cffFFD100/en <texto>|r o |cffFFD100/ingles <texto>|r - Traduce de español a inglés para responder")
+        chatFrame:AddMessage("   |cffFFD100/translator flush|r - Fuerza vaciado a disco")
     end
 end
 
--- Comando /en y /ingles para responder en inglés gamer
+-- ==============================================================================
+-- COMANDO /en y /ingles PARA RESPONDER EN INGLÉS GAMER
+-- ==============================================================================
 SLASH_WOWCHATTRANSLATOREN1 = "/en"
 SLASH_WOWCHATTRANSLATOREN2 = "/ingles"
 SlashCmdList["WOWCHATTRANSLATOREN"] = function(msg)
+    local chatFrame = SELECTED_CHAT_FRAME or DEFAULT_CHAT_FRAME or ChatFrame1
+
     if not msg or msg == "" then
-        DEFAULT_CHAT_FRAME:AddMessage("|cffFFD100Uso:|r /en <tu mensaje en español>")
-        DEFAULT_CHAT_FRAME:AddMessage("Ejemplo: |cfffff0c0/en esperen un momento no puleen todavia|r")
+        if chatFrame then
+            chatFrame:AddMessage("|cff00e5ff[WoW Chat Translator]|r |cffFFD100Uso:|r /en <tu mensaje en español>")
+            chatFrame:AddMessage("Ejemplo: |cfffff0c0/en esperen sanador sin mana no puleen todavia|r")
+        end
         return
     end
 
+    local english = msg
     if WoWChatTranslatorEngine and WoWChatTranslatorEngine.TranslateEsToEn then
-        local english = WoWChatTranslatorEngine.TranslateEsToEn(msg)
-        
-        -- Si hay una caja de chat abierta, colocar el texto traducido para que el jugador lo confirme con Enter
-        if ChatFrame1EditBox and ChatFrame1EditBox:IsVisible() then
-            ChatFrame1EditBox:SetText(english)
-            ChatFrame1EditBox:SetFocus()
-        else
-            -- Si no está abierta, abrir la caja de texto con el mensaje en inglés listo para enviar
-            ChatFrame_OpenChat(english, DEFAULT_CHAT_FRAME)
+        local ok, result = pcall(WoWChatTranslatorEngine.TranslateEsToEn, msg)
+        if ok and result and result ~= "" then
+            english = result
         end
-        DEFAULT_CHAT_FRAME:AddMessage("|cff00e5ff[WoW Chat Translator]|r Traducido al inglés: |cfffff0c0" .. english .. "|r (Pulsa Enter para enviar)")
+    end
+
+    -- 1. Siempre mostrar la traducción resultante en el chat local
+    if chatFrame then
+        chatFrame:AddMessage("|cff00e5ff[WoW Chat Translator]|r Traducción EN: |cfffff0c0" .. english .. "|r")
+    end
+
+    -- 2. Activar la caja de texto con el mensaje en inglés listo para confirmar con Enter
+    local editBox = nil
+    if ChatEdit_GetActiveWindow then
+        editBox = ChatEdit_GetActiveWindow()
+    end
+    if not editBox and ChatEdit_GetLastActiveWindow then
+        editBox = ChatEdit_GetLastActiveWindow()
+    end
+    if not editBox then
+        editBox = ChatFrame1EditBox or ChatFrameEditBox
+    end
+
+    if editBox then
+        if ChatEdit_ActivateChat then
+            pcall(ChatEdit_ActivateChat, editBox)
+        else
+            pcall(function() editBox:Show() end)
+        end
+        pcall(function()
+            editBox:SetText(english)
+            editBox:SetFocus()
+            if editBox.HighlightText then
+                editBox:HighlightText()
+            end
+        end)
+    elseif ChatFrame_OpenChat then
+        pcall(ChatFrame_OpenChat, english, DEFAULT_CHAT_FRAME)
     end
 end
